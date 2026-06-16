@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kisan Mitra Super App | 2026 Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Enhanced Farmer Theme Colors */
+            --primary: #166534; /* Deep Forest/Crop Green */
+            --primary-light: #dcfce7;
+            --secondary: #854d0e; /* Soil/Earth Brown */
+            --accent: #ca8a04; /* Wheat/Harvest Gold */
+            --danger: #dc2626;
+            --blue: #2563eb;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --bg-base: #f8fafc;
+            --glass-bg: rgba(255, 255, 255, 0.90); /* Slightly less transparent for better readability */
+            --glass-border: rgba(255, 255, 255, 0.6);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            background-image: 
+                linear-gradient(to bottom, rgba(22, 30, 20, 0.7), rgba(40, 25, 10, 0.8)),
+                url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80'); /* Golden hour wheat/farm */
+            background-attachment: fixed;
+            background-size: cover;
+            background-position: center;
+            color: var(--text-main);
+        padding-top: 40px;
+            padding-bottom: 40px;
+            min-height: 100vh;
+        }
+
+    .container { max-width: 800px; margin: 0 auto; padding: 0 16px; }
+
+    .auth-wrapper {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+    @media (max-width: 650px) {
+        .auth-wrapper { grid-template-columns: 1fr; }
+    }
+
+        .auth-logo { text-align: center; font-size: 56px; margin-bottom: 8px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
+        .auth-title { text-align: center; color: white; margin-bottom: 30px; font-size: 32px; font-weight: 800; letter-spacing: -1px; text-shadow: 0 2px 8px rgba(0,0,0,0.6); }
+
+        /* Glassmorphic Cards */
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            border: 1px solid var(--glass-border);
+        }
+
+        /* Hero Section */
+        .hero-card {
+            background: linear-gradient(135deg, rgba(22, 101, 52, 0.9), rgba(133, 77, 14, 0.85)), url('https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&w=800&q=80');
+            background-size: cover; background-position: center;
+            color: white; border-radius: 20px; padding: 24px; margin-bottom: 24px;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2);
+            position: relative; overflow: hidden;
+        }
+        .hero-date { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; opacity: 0.9; }
+
+        /* Quick Grid */
+        .features-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+        .feature-box {
+            background: var(--glass-bg); border-radius: 16px; padding: 20px 12px;
+            text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid var(--glass-border); cursor: pointer; transition: all 0.2s;
+        }
+        .feature-box:active { transform: scale(0.95); }
+        .feature-icon {
+            width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center;
+            justify-content: center; font-size: 24px; margin: 0 auto 12px auto; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Typography & Buttons */
+        h2 { font-size: 20px; margin-bottom: 20px; color: var(--primary); font-weight: 800; letter-spacing: -0.5px; }
+        h3 { font-size: 16px; font-weight: 700; color: white; margin-bottom: 12px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        
+        .btn {
+            background-color: var(--primary); color: white; border: none; padding: 14px 24px;
+            font-size: 15px; font-weight: 700; border-radius: 10px; cursor: pointer; width: 100%;
+            display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.1s, opacity 0.2s;
+            box-shadow: 0 4px 12px rgba(22, 101, 52, 0.4);
+        }
+        .btn:active { transform: scale(0.98); opacity: 0.9; }
+        .btn-small { padding: 8px 16px; font-size: 13px; border-radius: 8px; width: auto; }
+        .btn-earth { background-color: var(--secondary); box-shadow: 0 4px 12px rgba(133, 77, 14, 0.3); }
+        .btn-gold { background-color: var(--accent); color: #fff; box-shadow: 0 4px 12px rgba(202, 138, 4, 0.3); }
+        .btn-outline { background-color: transparent; border: 2px solid #e2e8f0; color: var(--text-main); box-shadow: none; }
+
+        /* Forms & Inputs */
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--text-main);}
+        .form-control { 
+            width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px; 
+            font-size: 15px; background: #fff; outline: none; transition: all 0.3s;
+            color: var(--text-main);
+        }
+        .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-light); }
+
+        /* Tab Switchers */
+        .tab-container { display: flex; background: rgba(226, 232, 240, 0.8); border-radius: 12px; margin-bottom: 20px; padding: 4px; backdrop-filter: blur(4px); }
+        .tab-btn { flex: 1; padding: 12px; text-align: center; font-weight: 600; cursor: pointer; color: var(--text-muted); border-radius: 8px; font-size: 14px; transition: all 0.3s; }
+        .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: slideUp 0.3s ease; }
+
+        /* Lists & Grids */
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #e2e8f0; }
+        .list-item:last-child { border-bottom: none; }
+        .price-tag { font-weight: 800; color: var(--primary); font-size: 17px; background: var(--primary-light); padding: 4px 10px; border-radius: 8px; }
+        .price-trend { font-size: 11px; margin-top: 4px; display: block; text-align: right; font-weight: 600; }
+        .trend-up { color: var(--primary); } .trend-down { color: var(--danger); }
+        
+        .product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .product-card {
+            background: rgba(255,255,255,0.95); border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .product-img { height: 110px; background: #f1f5f9; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+
+        /* Camera Scanner */
+        .camera-box {
+            width: 100%; height: 260px; background: #0f172a; border-radius: 16px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #94a3b8; margin-bottom: 20px; position: relative; overflow: hidden;
+            box-shadow: inset 0 4px 20px rgba(0,0,0,0.5);
+        }
+        .camera-box img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .scan-bar { position: absolute; width: 100%; height: 3px; background-color: #22c55e; top: 0; box-shadow: 0 0 15px #22c55e, 0 0 5px #22c55e; animation: scan 2s cubic-bezier(0.4, 0, 0.2, 1) infinite; display: none; }
+        @keyframes scan { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
+        
+        /* Badges & Avatars */
+        .badge { background: #fef08a; color: var(--secondary); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;}
+        .badge-danger { background: #fee2e2; color: var(--danger); }
+        .avatar { width: 40px; height: 40px; background: var(--secondary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <div class="auth-logo">🌾</div>
+        <h1 class="auth-title">Kisan Mitra</h1>
+        
+        <div class="auth-wrapper">
+            <!-- Login Form -->
+            <div class="card">
+                <h2 style="text-align: center; margin-bottom: 24px; color: var(--secondary);">Farmer Login</h2>
+                
+                <div class="form-group">
+                    <label>Mobile Number</label>
+                    <input type="tel" class="form-control" placeholder="+91 Enter your 10-digit number">
+                </div>
+                
+                <div class="form-group">
+                    <label>Password / Secure PIN</label>
+                    <input type="password" class="form-control" placeholder="••••••••">
+                </div>
+                
+                <button class="btn" style="margin-top: 24px;">Access Dashboard</button>
+            </div>
+
+            <!-- Registration Form -->
+            <div class="card">
+                <h2 style="color: var(--secondary); margin-bottom: 20px; text-align: center;">Farmer Registration</h2>
+                
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" class="form-control" placeholder="Enter your official name">
+                </div>
+                
+                <div class="form-group">
+                    <label>Mobile Number</label>
+                    <input type="tel" class="form-control" placeholder="+91 Enter your 10-digit number">
+                </div>
+                
+                <div class="form-group">
+                    <label>Region / District</label>
+                    <select class="form-control">
+                        <option>Visakhapatnam</option>
+                        <option>Guntur</option>
+                        <option>Krishna</option>
+                        <option>East Godavari</option>
+                        <option>Hyderabad / Telangana</option>
+                        <option>Other Region</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Create PIN (4 Digits)</label>
+                    <input type="password" class="form-control" placeholder="••••">
+                </div>
+                
+                <button class="btn btn-gold" style="margin-top: 24px;">Create Account</button>
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid rgba(255, 255, 255, 0.3); margin: 40px 0;">
+
+        <!-- SCREEN 1: HOME -->
+        <div id="screen-home">
+            
+            <div class="hero-card">
+                <div class="hero-date">Wed, June 3, 2026</div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h2 style="color: white; margin-bottom: 4px; font-size: 24px; letter-spacing: 0;">Welcome back, Jeevan</h2>
+                        <p style="font-size: 14px; opacity: 0.9; display: flex; align-items: center; gap: 4px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                            Visakhapatnam, AP
+                        </p>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 35px; display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div>
+                        <h3 style="font-size: 42px; margin: 0; font-weight: 800; line-height: 1;">30°C</h3>
+                        <p style="font-size: 14px; opacity: 0.9; margin-top: 4px;">Overcast • Humidity 82%</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 32px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">🌧️</span>
+                        <p style="font-size: 11px; font-weight: bold; background: rgba(220, 38, 38, 0.8); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 6px; margin-top: 4px;">Pre-Monsoon Alert</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="border-left: 4px solid var(--accent); padding: 16px;">
+                <h4 style="font-size: 14px; color: var(--secondary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                    <span>⚠️</span> Kharif Season Advisory
+                </h4>
+                <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">Light to moderate rains expected over coastal AP. <strong>Delay pesticide spraying</strong> by 48 hours to prevent wash-off. Prepare nurseries for Paddy sowing.</p>
+            </div>
+
+            <h3 style="color: var(--secondary); text-shadow: none;">Farm Management</h3>
+            <div class="features-grid">
+                <div class="feature-box">
+                    <div class="feature-icon" style="background: #eff6ff; color: #2563eb;">🛒</div>
+                    <strong style="font-size: 15px; display: block; margin-bottom: 4px; color: var(--text-main);">Agri-Trade</strong>
+                    <p style="font-size: 12px; color: var(--text-muted);">Buy Inputs & Sell</p>
+                </div>
+                <div class="feature-box">
+                    <div class="feature-icon" style="background: #fff7ed; color: #ea580c;">🚜</div>
+                    <strong style="font-size: 15px; display: block; margin-bottom: 4px; color: var(--text-main);">Labor Force</strong>
+                    <p style="font-size: 12px; color: var(--text-muted);">Hire Local Teams</p>
+                </div>
+                <div class="feature-box">
+                    <div class="feature-icon" style="background: #f0fdf4; color: #16a34a;">📊</div>
+                    <strong style="font-size: 15px; display: block; margin-bottom: 4px; color: var(--text-main);">AP Mandis</strong>
+                    <p style="font-size: 12px; color: var(--text-muted);">Live Daily Rates</p>
+                </div>
+                <div class="feature-box">
+                    <div class="feature-icon" style="background: #fdf2f8; color: #db2777;">🌿</div>
+                    <strong style="font-size: 15px; display: block; margin-bottom: 4px; color: var(--text-main);">AI Doctor</strong>
+                    <p style="font-size: 12px; color: var(--text-muted);">Scan Crop Health</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
