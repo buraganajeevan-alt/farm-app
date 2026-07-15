@@ -1,12 +1,21 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
+*.pkl
 venv/
 .venv/
-env/
 .env
 
-# OS
+# Node (front-end build deps — not shipped with the Flask app)
+node_modules/
+
+# OS / editor
 .DS_Store
 Thumbs.db
+*.swp
+
+# Large model/data artifacts we regenerate via the scripts
+# (keep model/ and realdata/ out of git to keep the repo light)
+model/
+realdata/
+data/

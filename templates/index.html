@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Farming — AI Crop Yield Prediction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* Design system: Organic Biophilic + Plant Care Tracker palette (UI/UX Pro Max) */
+  :root{
+    --forest:#15803D; --forest-deep:#0F172A; --leaf:#059669;
+    --sun:#D97706; --sky:#87CEEB; --cream:#F5F5DC;
+    --bg:#F0FDF4; --card:#FFFFFF; --fg:#0F172A;
+    --muted:#64748B; --border:#E2EFE7; --ring:#15803D;
+    --radius:24px; --radius-sm:14px;
+    --shadow:0 8px 32px rgba(21,128,61,.08);
+    --shadow-lg:0 18px 50px rgba(21,128,61,.14);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'Plus Jakarta Sans',-apple-system,Segoe UI,sans-serif;
+    margin:0;background:var(--bg);color:var(--fg);line-height:1.55;
+    background-image:radial-gradient(circle at 12% 8%,rgba(133,227,169,.18),transparent 38%),
+                     radial-gradient(circle at 88% 0%,rgba(135,206,235,.14),transparent 40%);
+  }
+  header{
+    background:linear-gradient(135deg,#15803D 0%,#0B5E2A 55%,#063D1C 100%);
+    color:#fff;padding:46px 20px 64px;position:relative;overflow:hidden;text-align:center;
+  }
+  header::after{
+    content:"";position:absolute;left:0;right:0;bottom:-2px;height:42px;
+    background:var(--bg);
+    border-radius:50% 50% 0 0/100% 100% 0 0;
+  }
+  header .leaf{font-size:2.6rem;display:block;margin-bottom:6px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.25));}
+  header h1{margin:0;font-size:clamp(1.5rem,3.4vw,2.3rem);font-weight:800;letter-spacing:-.02em;}
+  header p{margin:12px auto 0;max-width:640px;opacity:.92;font-size:1rem;font-weight:400;}
+  .container{max-width:960px;margin:-34px auto 40px;padding:0 16px;position:relative;z-index:2;}
+
+  .intro{
+    background:linear-gradient(135deg,#ECFDF3,#F0FDF4);
+    border:1px solid var(--border);border-left:5px solid var(--leaf);
+    padding:16px 18px;border-radius:var(--radius-sm);font-size:.92rem;color:#134E2B;
+    box-shadow:var(--shadow);margin-bottom:20px;
+  }
+  .intro b{color:var(--forest);}
+
+  form{
+    background:var(--card);padding:26px;border-radius:var(--radius);
+    box-shadow:var(--shadow-lg);border:1px solid var(--border);
+  }
+  .step-tag{
+    display:inline-flex;align-items:center;gap:8px;font-size:.78rem;font-weight:700;
+    color:var(--leaf);background:#ECFDF3;padding:5px 12px;border-radius:999px;
+    text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;
+  }
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .opt{opacity:.96;}
+  label{display:block;font-size:.84rem;font-weight:600;margin-bottom:6px;color:#334155;}
+  .hint{font-size:.73rem;color:var(--muted);font-weight:400;margin-top:4px;}
+  .req{color:#DC2626;font-weight:700;}
+  input,select{
+    width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+    font-size:.95rem;font-family:inherit;background:#FBFEFC;color:var(--fg);transition:.18s;
+  }
+  input:focus,select:focus{outline:none;border-color:var(--ring);box-shadow:0 0 0 4px rgba(21,128,61,.12);}
+  .loc-btn{
+    background:#ECFDF3;color:var(--forest);border:1.5px solid var(--border);
+    width:auto;padding:9px 15px;font-size:.88rem;font-weight:600;border-radius:999px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:7px;transition:.18s;
+  }
+  .loc-btn:hover{background:var(--forest);color:#fff;}
+  #geoStatus{font-size:.82rem;color:var(--leaf);margin-left:10px;font-weight:500;}
+  .btns{display:flex;gap:14px;margin-top:22px;flex-wrap:wrap;}
+  button.action{
+    flex:1;min-width:210px;padding:15px;border:0;border-radius:var(--radius-sm);
+    font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;transition:.18s;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .btn-predict{background:linear-gradient(135deg,#15803D,#0B5E2A);color:#fff;box-shadow:0 10px 24px rgba(21,128,61,.28);}
+  .btn-rec{background:linear-gradient(135deg,#D97706,#B45309);color:#fff;box-shadow:0 10px 24px rgba(217,119,6,.26);}
+  button.action:hover{transform:translateY(-2px);filter:brightness(1.04);}
+
+  .result{margin-top:24px;background:var(--card);padding:26px;border-radius:var(--radius);box-shadow:var(--shadow-lg);border:1px solid var(--border);}
+  .result h2{margin:0 0 14px;font-size:1.3rem;font-weight:800;color:var(--forest);}
+  .big{font-size:2.6rem;font-weight:800;color:var(--forest);line-height:1;}
+  .unit{font-size:1rem;font-weight:600;color:var(--muted);margin-left:6px;}
+  .badge{display:inline-flex;align-items:center;padding:5px 14px;border-radius:999px;font-size:.84rem;font-weight:700;margin-left:8px;vertical-align:middle;}
+  .ok{background:#DCFCE7;color:#166534;}
+  .no{background:#FEE2E2;color:#991B1B;}
+  .meta-row{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:14px;font-size:.95rem;}
+  .sugg{margin-top:18px;}
+  .sugg h3{font-size:1.02rem;margin:0 0 8px;color:#134E2B;}
+  ul.clean{margin:0;padding-left:0;list-style:none;}
+  ul.clean li{
+    background:#F0FDF4;border:1px solid var(--border);padding:11px 14px;border-radius:var(--radius-sm);
+    margin-bottom:8px;font-size:.92rem;display:flex;gap:10px;align-items:flex-start;
+  }
+  ul.clean li::before{content:"🌱";}
+  .rank{
+    display:flex;align-items:center;justify-content:space-between;padding:16px 18px;margin:10px 0;
+    border:1px solid var(--border);border-radius:var(--radius-sm);background:#FBFEFC;transition:.18s;
+  }
+  .rank:hover{box-shadow:var(--shadow);transform:translateY(-1px);}
+  .rank .name{font-weight:700;font-size:1.08rem;display:flex;align-items:center;gap:10px;}
+  .rank .yield{color:var(--forest);font-weight:800;font-size:1.1rem;}
+  .medal{font-size:1.3rem;}
+  .err{color:#991B1B;background:#FEE2E2;padding:14px;border-radius:var(--radius-sm);font-weight:600;}
+  .defbox{background:#FFFBEB;border:1px solid #FDE68A;padding:12px 16px;border-radius:var(--radius-sm);font-size:.84rem;color:#92400E;margin-top:18px;}
+  .note{font-size:.8rem;color:var(--muted);margin-top:18px;line-height:1.6;}
+  hr{border:none;border-top:1px solid var(--border);margin:26px 0;}
+  .footer-cta{text-align:center;margin-top:30px;color:var(--muted);font-size:.85rem;}
+  @media(max-width:640px){.grid{grid-template-columns:1fr;}.btns{flex-direction:column;}header{padding:36px 16px 56px;}}
+</style>
+</head>
+<body>
+<header>
+  <span class="leaf">🌾</span>
+  <h1>Smart Farming — AI Crop Yield Prediction</h1>
+  <p>Tell us your <b>crop &amp; soil</b> — our AI fills the rest from regional data and predicts your yield, suitability &amp; best crops to grow.</p>
+</header>
+
+<div class="container">
+  <div class="intro">
+    <b>Farmer-first:</b> you only need your <b>Crop</b> and <b>Soil Type</b>. Rainfall, temperature,
+    humidity, pH and N/P/K are <b>auto-filled</b> from typical regional values (stand-in for government open
+    data: IMD, Soil Health Card, NBSS&amp;LUP). Have your <b>Soil Health Card</b>? Enter its <b>SHC ID</b> and we
+    auto-fill your plot-specific pH, N, P &amp; K for a sharper prediction.
+  </div>
+
+  <form method="POST" action="/predict">
+    <span class="step-tag">Step 1 · Your Farm</span>
+    <div style="margin-bottom:14px;">
+      <button type="button" class="loc-btn" onclick="useLocation()">📍 Use my location (GPS)</button>
+      <span id="geoStatus"></span>
+    </div>
+    <div class="grid">
+      <div>
+        <label>State / Region (regional weather)</label>
+        <select name="state" onchange="statePicked(this.value)">
+          <option value="">— auto (GPS or default) —</option>
+          {% for st in states %}<option value="{{st}}" {% if input_data and input_data.get('state')==st %}selected{% endif %}>{{st}}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label><span class="req">*</span> Crop Name</label>
+        <select name="crop" required>
+          {% for c in crops %}<option value="{{c}}" {% if input_data and input_data.Crop==c %}selected{% endif %}>{{c}}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label><span class="req">*</span> Soil Type</label>
+        <select name="soil" required>
+          {% for s in soils %}<option value="{{s}}" {% if input_data and input_data.Soil_Type==s %}selected{% endif %}>{{s}}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <span class="step-tag" style="margin-top:22px;">Step 2 · Soil Health Card (optional)</span>
+    <div style="margin-bottom:14px;">
+      <label>Soil Health Card ID (auto-fills your soil test values)</label>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <input type="text" name="shc_id" id="shcId" value="{% if shc_id %}{{shc_id}}{% endif %}" placeholder="e.g. SHC2024AP001" style="max-width:260px;"
+               onchange="lookupSHC(this.value)" autocomplete="off">
+        <button type="button" class="loc-btn" onclick="lookupSHC(document.getElementById('shcId').value)">🔎 Load card</button>
+        <span id="shcStatus"></span>
+      </div>
+      <div class="hint">Enter your 12-digit Soil Health Card number. pH, N, P, K are filled automatically. Leave blank to use regional defaults.</div>
+    </div>
+    <div class="grid opt">
+      <div><label>Rainfall (mm)</label><input type="number" step="0.1" name="rainfall" value="{% if input_data %}{{input_data.Rainfall}}{% endif %}" placeholder="auto-filled if blank"><div class="hint">Leave blank → regional default</div></div>
+      <div><label>Temperature (°C)</label><input type="number" step="0.1" name="temperature" value="{% if input_data %}{{input_data.Temperature}}{% endif %}" placeholder="auto-filled if blank"></div>
+      <div><label>Humidity (%)</label><input type="number" step="0.1" name="humidity" value="{% if input_data %}{{input_data.Humidity}}{% endif %}" placeholder="auto-filled if blank"></div>
+      <div><label>Soil pH</label><input type="number" step="0.1" name="ph" value="{% if input_data %}{{input_data.pH}}{% endif %}" placeholder="auto-filled if blank"></div>
+      <div><label>Nitrogen (N)</label><input type="number" step="0.1" name="n" value="{% if input_data %}{{input_data.N}}{% endif %}" placeholder="your card value"></div>
+      <div><label>Phosphorus (P)</label><input type="number" step="0.1" name="p" value="{% if input_data %}{{input_data.P}}{% endif %}" placeholder="your card value"></div>
+      <div><label>Potassium (K)</label><input type="number" step="0.1" name="k" value="{% if input_data %}{{input_data.K}}{% endif %}" placeholder="your card value"></div>
+    </div>
+
+    <div class="btns">
+      <button type="submit" class="action btn-predict">🔍 Predict Yield</button>
+      <button type="submit" formaction="/recommend" class="action btn-rec">🌟 Recommend Best 3 Crops</button>
+    </div>
+  </form>
+
+  {% if result and result.defaults_used %}
+  <div class="defbox">
+    ℹ️ Auto-filled from regional defaults (you left these blank):
+    {% for k,v in result.defaults_used.items() %}<b>{{ k }}={{ v }}</b>{% if not loop.last %}, {% endif %}{% endfor %}.
+    Override with your Soil Health Card values for a plot-specific prediction.
+  </div>
+  {% endif %}
+
+  {% if error %}
+    <div class="result"><div class="err">⚠️ Error: {{ error }}</div></div>
+  {% endif %}
+
+  {% if result %}
+  <div class="result">
+    <h2>🌾 Prediction Result</h2>
+    <p><span class="big">{{ result.predicted_yield }}</span><span class="unit">t/ha</span></p>
+    <div class="meta-row">
+      <span>Suitability:
+        {% if result.suitable %}<span class="badge ok">Suitable ✓</span>
+        {% else %}<span class="badge no">Not Ideal ✗</span>{% endif %}</span>
+      <span>Confidence: <b>{{ (result.confidence*100)|round(1) }}%</b></span>
+    </div>
+    {% if result.suggestions %}
+    <div class="sugg">
+      <h3>💡 Suggestions to Improve Yield</h3>
+      <ul class="clean">{% for s in result.suggestions %}<li>{{ s }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if recommendations %}
+  <div class="result">
+    <h2>🌟 Top 3 Recommended Crops for Your Soil</h2>
+    <p style="color:var(--muted);margin-top:0;">Ranked by predicted yield for your soil &amp; conditions:</p>
+    {% for r in recommendations %}
+    <div class="rank">
+      <span class="name"><span class="medal">{% if loop.index==1 %}🥇{% elif loop.index==2 %}🥈{% else %}🥉{% endif %}</span>{{ r.crop }}</span>
+      <span><span class="yield">{{ r.predicted_yield }} t/ha</span>
+        {% if r.suitable %}<span class="badge ok">Suitable ✓</span>{% else %}<span class="badge no">Check soil</span>{% endif %}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <hr>
+  <p class="note">
+    * Crop &amp; Soil Type are required. Other fields auto-fill from regional/typical values (proxy for IMD, Soil Health Card, NBSS&amp;LUP open data); override them with your own soil-test numbers for higher accuracy.
+    GPS "Use my location" detects your state from phone coordinates and auto-fills that state's rainfall.
+    Predictions are a decision aid based on regional data, not a farm-level measurement.
+  </p>
+  <p class="footer-cta">🌿 Built as a free, farmer-friendly decision aid · Model: {{ model_name }}</p>
+</div>
+
+<script>
+function useLocation(){
+  var s = document.getElementById('geoStatus');
+  if(!navigator.geolocation){ s.textContent='GPS not supported on this device.'; return; }
+  s.textContent='Detecting location...';
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat=pos.coords.latitude, lon=pos.coords.longitude;
+    fetch('/api/geo',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({lat:lat,lon:lon})})
+    .then(r=>r.json()).then(d=>{
+      if(d.status==='ok'){
+        s.textContent='Detected: '+d.state_name+' (rainfall ≈ '+d.rainfall_default+' mm)';
+        var rf=document.querySelector('input[name=rainfall]');
+        if(rf && !rf.value){ rf.value=d.rainfall_default; }
+        var st=document.querySelector('select[name=state]');
+        if(st && d.state_code){ st.value=d.state_code; }
+      } else { s.textContent='Lookup failed: '+d.message; }
+    }).catch(e=>{ s.textContent='Lookup error: '+e; });
+  }, function(err){
+    s.textContent='Location denied/unavailable ('+err.message+'). Select your state manually.';
+  });
+}
+function statePicked(code){
+  if(!code) return;
+  fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({state:code})})
+  .then(r=>r.json()).then(d=>{
+    if(d.status==='ok'){
+      var rf=document.querySelector('input[name=rainfall]');
+      if(rf && !rf.value){ rf.value=d.rainfall_default; }
+      var s=document.getElementById('geoStatus');
+      if(s) s.textContent='State: '+d.state_code+' (rainfall ≈ '+d.rainfall_default+' mm)';
+    }
+  });
+}
+
+function lookupSHC(rawId){
+  var s = document.getElementById('shcStatus');
+  var id = (rawId || '').trim();
+  if(!id){ s.textContent=''; return; }
+  s.textContent='Looking up card...';
+  fetch('/api/shc',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({shc_id:id})})
+  .then(r=>r.json()).then(d=>{
+    if(d.found){
+      // auto-fill the soil-test fields only if the user hasn't typed their own
+      var map = {ph:'ph', n:'n', p:'p', k:'k'};
+      for(var key in map){
+        var el = document.querySelector('input[name='+map[key]+']');
+        if(el && !el.value){ el.value = d[key]; }
+      }
+      s.innerHTML = '✅ Card loaded: ' + (d.farmer||'') + (d.village? ' · ' + d.village : '') + ' (pH ' + d.ph + ', N ' + d.n + ', P ' + d.p + ', K ' + d.k + ')';
+      s.style.color = '#166534';
+      // also set state if the card carries one and the user hasn't picked
+      var st = document.querySelector('select[name=state]');
+      if(st && d.state && !st.value){ st.value = d.state; }
+    } else {
+      s.textContent = '⚠️ Card not found in local registry. Type values manually or leave blank for regional defaults.';
+      s.style.color = '#991B1B';
+    }
+  }).catch(e=>{ s.textContent='Lookup error: '+e; s.style.color='#991B1B'; });
+}
+
+</script>
+</body>
+</html>

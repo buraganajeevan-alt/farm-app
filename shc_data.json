@@ -1,0 +1,11 @@
+{
+  "_note": "Local Soil Health Card (SHC) registry — sample records for demo/offline use. In production this maps to the state Soil Health Card portal / soil-test lab database. Replace/extend with real card data. Keys: ph, n (Nitrogen kg/ha), p (Phosphorus kg/ha), k (Potassium kg/ha). Lookup is case-insensitive on the SHC ID.",
+  "SHC2024AP001": {"farmer": "Ramesh Reddy",   "village": "Anantapur", "state": "AP", "ph": 6.2, "n": 38, "p": 18, "k": 22},
+  "SHC2024PB012": {"farmer": "Gurpreet Singh", "village": "Ludhiana",  "state": "PUN", "ph": 7.8, "n": 95, "p": 42, "k": 60},
+  "SHC2023UP204": {"farmer": "Suresh Kumar",   "village": "Varanasi",  "state": "UP", "ph": 7.4, "n": 62, "p": 30, "k": 35},
+  "SHC2024MH055": {"farmer": "Anil Deshmukh",  "village": "Nagpur",    "state": "MAH", "ph": 8.1, "n": 45, "p": 20, "k": 28},
+  "SHC2024WB088": {"farmer": "Tapas Pal",      "village": "Nadia",     "state": "WB", "ph": 5.6, "n": 55, "p": 25, "k": 30},
+  "SHC2024KA130": {"farmer": "Mahesh Gowda",   "village": "Mandya",    "state": "KRN", "ph": 6.0, "n": 40, "p": 16, "k": 24},
+  "SHC2024GJ007": {"farmer": "Bharat Patel",   "village": "Rajkot",    "state": "GUJ", "ph": 7.9, "n": 50, "p": 22, "k": 33},
+  "SHC2023TN310": {"farmer": "Kumarasamy",     "village": "Madurai",   "state": "TND", "ph": 6.8, "n": 58, "p": 28, "k": 40}
+}
