@@ -13,6 +13,7 @@ node_modules/
 Thumbs.db
 *.swp
 
-# Reference papers
+# Reference papers & document files
 reference_papers/
+*.docx
 
