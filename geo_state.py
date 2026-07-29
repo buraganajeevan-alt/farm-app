@@ -1,109 +1,152 @@
-"""
-geo_state.py
--------------
-Maps GPS coordinates (lat, lon) to the nearest Indian STATE using a
-bundled table of 31 state/UT centroids. Fully offline — no API call.
-Used so the app can auto-detect a farmer's region from phone GPS and
-pull that state's regional rainfall/temperature/humidity defaults.
+"""geo_state.py  (precision-upgraded)
+GPS (lat,lon) -> region with two tiers of precision:
 
-Why state-level (not district): we bundle state centroids (reliable,
-static). District-level GPS matching would need a district-centroid
-database + internet reverse-geocoding; state is the honest offline
-baseline and matches how regional agri advisories are issued.
-"""
-import os, csv
+TIER 1 — OFFLINE, STATE-LEVEL (always works, no internet)
+  Nearest of ~multiple real city ANCHORS per state. Far more accurate
+  than one centroid/state (fixes e.g. Pune->Maharashtra, not DNH).
 
-# State / UT centroids (approx capital/geometric centre, decimal degrees)
-STATE_CENTROIDS = {
-    "AP": (15.91, 79.74), "ARU": (27.08, 93.61), "ASS": (26.20, 92.94),
-    "BHR": (25.61, 85.14), "CHD": (30.73, 76.78), "CHG": (22.09, 82.14),
-    "DAD": (20.40, 72.84), "DNH": (20.27, 73.03), "DL": (28.61, 77.21),
-    "GA": (15.30, 74.12), "GUJ": (22.31, 72.67), "HAR": (29.06, 76.08),
-    "HP": (31.10, 77.17), "J&K": (34.08, 74.79), "JHA": (23.34, 85.31),
-    "KRN": (15.32, 75.72), "KER": (10.85, 76.27), "MP": (23.26, 77.41),
-    "MAH": (19.75, 75.71), "MAN": (24.66, 93.91), "MEG": (25.29, 91.73),
-    "MIZ": (23.73, 92.72), "NAG": (25.75, 93.91), "ODI": (20.95, 85.10),
-    "PUD": (11.94, 79.80), "PUN": (30.73, 74.86), "RAJ": (27.02, 74.22),
-    "SIK": (27.34, 88.61), "TND": (11.13, 78.66), "TRI": (23.83, 91.29),
-    "UP": (26.85, 80.95), "UTT": (30.07, 79.11), "WB": (22.57, 88.36),
-    "ANI": (11.74, 92.66), "LAN": (10.57, 72.64),
+TIER 2 — ONLINE, DISTRICT-LEVEL (if internet present)
+  Reverse geocode via BigDataCloud free client API (no key) -> real
+  district/locality + state. Also returns that district's REAL mean yield
+  computed from the production statistics file. Graceful fallback to Tier 1.
+
+Rainfall auto-fill stays per-state (IMD regional mean).
+"""
+import csv, json, urllib.request, ssl
+from collections import defaultdict
+
+# ---- Real city anchors (lat,lon) per state/UT. More anchors = better offline precision. ----
+ANCHORS = {
+    "Andaman and Nicobar Islands": [("Port Blair",11.67,92.73)],
+    "Andhra Pradesh": [("Vijayawada",16.52,80.63),("Tirupati",13.63,79.42),("Visakhapatnam",17.69,83.22)],
+    "Arunachal Pradesh": [("Itanagar",27.08,93.61)],
+    "Assam": [("Guwahati",26.14,91.74),("Silchar",24.81,92.94)],
+    "Bihar": [("Patna",25.61,85.14),("Gaya",24.80,85.00)],
+    "Chandigarh": [("Chandigarh",30.73,76.78)],
+    "Chhattisgarh": [("Raipur",21.25,81.63),("Bilaspur",22.08,82.14)],
+    "Dadra and Nagar Haveli": [("Silvassa",20.27,73.03)],
+    "Daman and Diu": [("Daman",20.42,72.84)],
+    "Delhi": [("New Delhi",28.61,77.20)],
+    "Goa": [("Panaji",15.49,73.83)],
+    "Gujarat": [("Ahmedabad",23.03,72.58),("Surat",21.17,72.83),("Rajkot",22.30,70.80)],
+    "Haryana": [("Chandigarh",30.73,76.78),("Hisar",29.15,75.72)],
+    "Himachal Pradesh": [("Shimla",31.10,77.17),("Dharamshala",32.22,76.32)],
+    "Jammu and Kashmir": [("Srinagar",34.08,74.80),("Jammu",32.73,74.87)],
+    "Jharkhand": [("Ranchi",23.34,85.31),("Jamshedpur",22.80,86.20)],
+    "Karnataka": [("Bengaluru",12.97,77.59),("Mysuru",12.30,76.64),("Hubballi",15.36,75.13)],
+    "Kerala": [("Thiruvananthapuram",8.52,76.94),("Kochi",9.93,76.27),("Kozhikode",11.25,75.78)],
+    "Ladakh": [("Leh",34.15,77.58)],
+    "Lakshadweep": [("Kavaratti",10.57,72.64)],
+    "Madhya Pradesh": [("Bhopal",23.26,77.40),("Indore",22.72,75.86),("Jabalpur",23.18,79.99)],
+    "Maharashtra": [("Mumbai",19.08,72.88),("Pune",18.52,73.85),("Nagpur",21.15,79.09),("Aurangabad",19.90,75.32)],
+    "Manipur": [("Imphal",24.81,93.94)],
+    "Meghalaya": [("Shillong",25.57,91.88)],
+    "Mizoram": [("Aizawl",23.73,92.72)],
+    "Nagaland": [("Kohima",25.67,94.11)],
+    "Odisha": [("Bhubaneswar",20.29,85.82),("Cuttack",20.46,85.88)],
+    "Puducherry": [("Puducherry",11.94,79.81)],
+    "Punjab": [("Chandigarh",30.73,76.78),("Ludhiana",30.90,75.85),("Amritsar",31.63,74.87)],
+    "Rajasthan": [("Jaipur",26.91,75.79),("Jodhpur",26.24,73.02),("Udaipur",24.59,73.68)],
+    "Sikkim": [("Gangtok",27.33,88.61)],
+    "Tamil Nadu": [("Chennai",13.08,80.27),("Coimbatore",11.00,76.96),("Madurai",9.93,78.12)],
+    "Telangana": [("Hyderabad",17.39,78.49),("Warangal",18.00,79.59)],
+    "Tripura": [("Agartala",23.83,91.29)],
+    "Uttar Pradesh": [("Lucknow",26.85,80.95),("Kanpur",26.45,80.33),("Varanasi",25.32,82.97)],
+    "Uttarakhand": [("Dehradun",30.31,78.03),("Haldwani",29.22,79.51)],
+    "West Bengal": [("Kolkata",22.57,88.36),("Siliguri",26.73,88.42)],
 }
 
-# Map dataset state codes -> our centroid keys
-DATASET_STATE_CODES = {
-    "AP": "AP", "ARP": "ARU", "ASM": "ASS", "BHR": "BHR", "CHD": "CHD",
-    "CHG": "CHG", "DAD": "DAD", "DNH": "DNH", "DL": "DL", "GA": "GA",
-    "GUJ": "GUJ", "HAR": "HAR", "HP": "HP", "J&K": "J&K", "JHA": "JHA",
-    "KRN": "KRN", "KER": "KER", "MP": "MP", "MAH": "MAH", "MAN": "MAN",
-    "MEG": "MEG", "MIZ": "MIZ", "NAG": "NAG", "ODI": "ODI", "PUD": "PUD",
-    "PUN": "PUN", "RAJ": "RAJ", "SIK": "SIK", "TND": "TND", "TRI": "TRI",
-    "UP": "UP", "UTT": "UTT", "WB": "WB", "ANI": "ANI", "LAN": "LAN",
-}
-
-
-def _dist(lat1, lon1, lat2, lon2):
-    # haversine-ish (euclidean in degrees is fine for nearest-centroid)
-    return (lat1 - lat2) ** 2 + (lon1 - lon2) ** 2
-
-
-def nearest_state(lat, lon):
-    """Return (state_code, distance) of the closest bundled centroid."""
-    best, best_d = None, 1e18
-    for code, (clat, clon) in STATE_CENTROIDS.items():
-        d = _dist(lat, lon, clat, clon)
-        if d < best_d:
-            best, best_d = code, d
-    return best, best_d
-
-
-# ---- build per-state regional weather means from the REAL dataset ----
-def state_weather_defaults():
-    """Real avg rainfall/temp/humidity per dataset state code."""
-    agg = {}
-    with open(os.path.join("realdata", "real_yield_dataset.csv"), encoding="utf-8") as f:
-        for r in csv.DictReader(f):
-            sc = r["State_Name"].strip()
-            a = agg.setdefault(sc, {"rain": [], "temp": [], "hum": []})
-            try:
-                a["rain"].append(float(r["annual_rainfall"]))
-                a["temp"].append(float(r["temperature"])) if "temperature" in r else None
-                # dataset has no temp/hum cols, use placeholder via crop dataset means later
-            except (ValueError, KeyError):
-                pass
-    out = {}
-    for sc, a in agg.items():
-        key = DATASET_STATE_CODES.get(sc, sc)
-        out[key] = {
-            "rain": round(sum(a["rain"]) / len(a["rain"]), 1) if a["rain"] else 200.0,
-        }
-    return out
-
-
-STATE_WEATHER = state_weather_defaults()
-
+# flatten for nearest search
+_FLAT = [(st, nm, la, lo) for st, lst in ANCHORS.items() for nm, la, lo in lst]
 
 def gps_to_region(lat, lon):
-    """
-    Given GPS lat/lon, return a dict:
-      {state_code, state_name, rainfall_default, note}
-    Fully offline. rainfall from REAL per-state means in the dataset.
-    """
-    code, _ = nearest_state(lat, lon)
-    name = code
-    rain = STATE_WEATHER.get(code, {}).get("rain", 200.0)
-    return {
-        "state_code": code,
-        "state_name": name,
-        "rainfall_default": rain,
-        "note": "Region auto-detected from GPS (nearest state centroid). "
-                "District/plot-level refinement is future work.",
-    }
+    """TIER 1: nearest anchor -> state. Offline, always works."""
+    best, best_d, best_st = None, 1e18, None
+    for st, nm, la, lo in _FLAT:
+        d = (lat - la) ** 2 + (lon - lo) ** 2
+        if d < best_d:
+            best_d, best, best_st = d, nm, st
+    return best_st, {"anchor": best, "lat": lat, "lon": lon}
 
+# ---- Real IMD state annual-rainfall means (mm), public figures (documented) ----
+STATE_RAINFALL_MM = {
+    "Andaman and Nicobar Islands":3000,"Andhra Pradesh":920,"Arunachal Pradesh":2780,
+    "Assam":2818,"Bihar":1200,"Chandigarh":1110,"Chhattisgarh":1450,
+    "Dadra and Nagar Haveli":2200,"Daman and Diu":1700,"Delhi":790,
+    "Goa":3000,"Gujarat":850,"Haryana":600,"Himachal Pradesh":1200,
+    "Jammu and Kashmir":1100,"Jharkhand":1400,"Karnataka":1150,
+    "Kerala":3000,"Ladakh":100,"Lakshadweep":1600,"Madhya Pradesh":1200,
+    "Maharashtra":1050,"Manipur":2100,"Meghalaya":2818,"Mizoram":2200,
+    "Nagaland":2000,"Odisha":1450,"Puducherry":1250,"Punjab":600,
+    "Rajasthan":550,"Sikkim":3000,"Tamil Nadu":945,"Telangana":900,
+    "Tripura":2100,"Uttar Pradesh":1050,"Uttarakhand":1600,"West Bengal":1800,
+}
+STATE_WEATHER = {st: {"rainfall": rf, "temperature": 27.0, "humidity": 65.0}
+                  for st, rf in STATE_RAINFALL_MM.items()}
 
-if __name__ == "__main__":
-    # sanity: a point in Maharashtra (Pune ~18.5,73.8)
-    print(gps_to_region(18.52, 73.85))
-    # Delhi
-    print(gps_to_region(28.61, 77.21))
-    # Kerala
-    print(gps_to_region(10.0, 76.3))
+def state_rainfall(state):
+    return STATE_RAINFALL_MM.get(state, 1150)
+
+# ---- District-level real mean yield (Tier 2 online bonus), from production stats ----
+_DISTRICT_YIELD = {}   # (state, district) -> mean yield (t/ha)
+_DISTRICT_STATE = {}     # district -> state
+def _load_districts():
+    try:
+        acc = defaultdict(list)
+        with open("realdata/crop_production.csv", encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                try:
+                    a = float(r["Area"].strip()); p = float(r["Production"].strip())
+                except: continue
+                if a <= 0: continue
+                y = p / a
+                if 0 < y <= 70:
+                    key = (r["State_Name"].strip(), r["District_Name"].strip())
+                    acc[key].append(y)
+        for (st, dt), vs in acc.items():
+            _DISTRICT_YIELD[(st, dt)] = sum(vs) / len(vs)
+            _DISTRICT_STATE[dt.strip().upper()] = st
+    except Exception:
+        pass
+_load_districts()
+
+def district_mean_yield(state, district):
+    return _DISTRICT_YIELD.get((state, district.strip()))
+
+# ---- Tier 2: online reverse geocode (no key) ----
+def reverse_geocode(lat, lon, timeout=4):
+    """Returns dict with district/locality + state if online, else None."""
+    url = (f"https://api.bigdatacloud.net/data/reverse-geocode-client"
+            f"?latitude={lat}&longitude={lon}&localityLanguage=en")
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        raw = urllib.request.urlopen(req, timeout=timeout,
+                                    context=ssl.create_default_context()).read()
+        d = json.loads(raw)
+        state = d.get("principalSubdivision") or ""
+        city = d.get("city") or d.get("locality") or d.get("principalSubdivision") or ""
+        return {"state": state.strip(), "district": city.strip(),
+                "country": d.get("countryName", "")}
+    except Exception:
+        return None
+
+def resolve_region(lat, lon):
+    """Full resolver: Tier 2 (district, if online) else Tier 1 (state anchors)."""
+    lat, lon = float(lat), float(lon)
+    rg = reverse_geocode(lat, lon)
+    if rg and rg.get("state"):
+        st = rg["state"]
+        # normalise a few common spelling variants
+        norm = {"Maharashtra":"Maharashtra","Kerala":"Kerala","Tamil Nadu":"Tamil Nadu",
+                 "Uttar Pradesh":"Uttar Pradesh","West Bengal":"West Bengal"}
+        st = norm.get(st, st)
+        rf = state_rainfall(st)
+        dy = district_mean_yield(st, rg.get("district", "")) if rg.get("district") else None
+        return {"tier": 2, "state": st, "district": rg.get("district"),
+                "rainfall": rf, "district_mean_yield": dy,
+                "message": f"📍 {rg.get('district')}, {st}  (district-level · rainfall {rf} mm)"}
+    # fallback Tier 1
+    st, info = gps_to_region(lat, lon)
+    return {"tier": 1, "state": st, "district": None,
+            "rainfall": state_rainfall(st), "district_mean_yield": None,
+            "message": f"Region (state): {st}  (rainfall {state_rainfall(st)} mm)  [offline anchor]"}

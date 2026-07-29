@@ -1,179 +1,130 @@
+"""app.py — Flask web app for the Smart Farming crop-yield project.
+Farmer-practical: only Crop + Soil Type required.
+GPS button OR State dropdown resolves region -> real IMD rainfall auto-fill.
+Soil Health Card (pH/N/P/K) auto-fills from real per-crop means, overridable.
 """
-app.py — Smart Farming AI Crop Yield Prediction (farmer-practical build)
-----------------------------------------------------------------
-Design (per deployment discussion):
-  - Farmer enters ONLY what they know: Crop + Soil Type.
-  - Rainfall / Temperature / Humidity / pH / N / P / K AUTO-FILL
-    from REAL regional/typical per-crop defaults (stand-in for government
-    open data: IMD, Soil Health Card, NBSS&LUP).
-  - Farmer MAY override any field with their OWN soil-test values
-    (e.g. their Soil Health Card numbers) for a sharper prediction.
-  - Yield is the model's OUTPUT, never an input.
-  - '/recommend' ranks all crops by predicted yield for the soil profile.
-"""
-import os
-from flask import Flask, render_template, request, jsonify
-
+from flask import Flask, request, jsonify, render_template, session
 from predict_helper import Predictor
-from geo_state import gps_to_region, STATE_WEATHER
-from shc_helper import lookup as lookup_shc
+from geo_state import resolve_region, STATE_WEATHER
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # load GROQ_API_KEY etc. from .env if present
+except Exception:
+    pass
+from agri_chat import chat as agri_chat, is_available as chat_available, transcribe as agri_transcribe, speak as agri_speak, diagnose as agri_diagnose
 
 app = Flask(__name__)
+app.secret_key = "smart-farming-dev-key"
 predictor = Predictor()
 
 CROPS = predictor.meta["crops"]
 SOILS = predictor.meta["soils"]
-STATES = sorted(STATE_WEATHER.keys())  # real state codes w/ rainfall defaults
+STATES = sorted(STATE_WEATHER.keys())
 
-# fields a farmer does NOT need to measure (auto-filled, overridable)
-AUTO_FIELDS = ["rainfall", "temperature", "humidity", "ph", "n", "p", "k"]
+def _f(v):
+    try: return float(v)
+    except: return None
 
+@app.route("/")
+def home():
+    return render_template("index.html", crops=CROPS, soils=SOILS, states=STATES,
+                           best=predictor.meta["best_model"],
+                           metrics=predictor.meta["metrics"])
 
 @app.route("/api/geo", methods=["POST"])
 def api_geo():
     try:
-        lat = float(request.get_json(force=True).get("lat"))
-        lon = float(request.get_json(force=True).get("lon"))
-        region = gps_to_region(lat, lon)
-        return jsonify({"status": "ok", **region})
+        body = request.get_json(force=True, silent=True) or {}
+        lat = float(body.get("lat")); lon = float(body.get("lon"))
+        rg = resolve_region(lat, lon)
+        msg = rg["message"]
+        if rg.get("district_mean_yield"):
+            msg += f"  ·  district mean yield ≈ {rg['district_mean_yield']:.2f} t/ha"
+        return jsonify({"state": rg["state"], "district": rg.get("district"),
+                       "tier": rg["tier"], "rainfall": rg["rainfall"],
+                       "district_mean_yield": rg.get("district_mean_yield"),
+                       "message": msg})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 400
-
-
-@app.route("/api/shc", methods=["POST"])
-def api_shc():
-    try:
-        shc_id = request.get_json(force=True).get("shc_id", "")
-        rec = lookup_shc(shc_id)
-        return jsonify(rec)
-    except Exception as e:
-        return jsonify({"found": False, "error": str(e)}), 400
-
+        return jsonify({"error": str(e)}), 400
 
 @app.route("/api/state", methods=["POST"])
 def api_state():
-    try:
-        code = request.get_json(force=True).get("state")
-        rain = STATE_WEATHER.get(code, {}).get("rain", 200.0)
-        return jsonify({"status": "ok", "state_code": code,
-                     "rainfall_default": rain})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 400
-
-
-def build_data(form):
-    """Build the prediction dict. Crop+Soil required; rest defaulted
-    from real per-crop values, or from the farmer's selected STATE
-    rainfall if they picked one, unless they typed their own.
-    If a valid Soil Health Card (SHC) ID is supplied, its pH/N/P/K
-    values are used as the base defaults (overridable by manual entry)."""
-    crop = form.get("crop")
-    soil = form.get("soil")
-    state = (form.get("state") or "").strip()
-    data = {"Crop": crop, "Soil_Type": soil}
-    defaults = predictor.default_inputs(crop) if crop else {}
-    # state-level rainfall overrides the generic per-crop rainfall default
-    if state and state in STATE_WEATHER:
-        defaults = dict(defaults)
-        defaults["Rainfall"] = STATE_WEATHER[state]["rain"]
-    # Soil Health Card: if a valid SHC ID is given, its plot-specific
-    # pH/N/P/K replaces the regional default (unless farmer types their own).
-    shc_id = (form.get("shc_id") or "").strip()
-    if shc_id:
-        rec = lookup_shc(shc_id)
-        if rec.get("found"):
-            defaults = dict(defaults)
-            for dkey, rkey in [("pH", "ph"), ("N", "n"), ("P", "p"), ("K", "k")]:
-                if rec.get(rkey) is not None:
-                    defaults[dkey] = rec[rkey]
-    keymap = {"rainfall": "Rainfall", "temperature": "Temperature",
-               "humidity": "Humidity", "ph": "pH", "n": "N",
-               "p": "P", "k": "K"}
-    for fname, dkey in keymap.items():
-        raw = form.get(fname, "").strip()
-        if raw != "":                      # farmer supplied their own value
-            data[dkey] = float(raw)
-        else:                             # auto-fill regional default
-            data[dkey] = float(defaults.get(dkey, 0))
-    return data, defaults
-
-
-@app.route("/")
-def home():
-    return render_template("index.html", crops=CROPS, soils=SOILS,
-                          model_name=predictor.meta["best_model"],
-                          auto_fields=AUTO_FIELDS, states=STATES,
-                          shc_id="")
-
-
-@app.route("/predict", methods=["POST"])
-def predict():
-    try:
-        data, defaults = build_data(request.form)
-        result = predictor.predict(data)
-        result["defaults_used"] = {
-            k: v for k, v in defaults.items()
-            if request.form.get(k.lower(), "").strip() == ""}
-        return render_template("index.html", crops=CROPS, soils=SOILS,
-                               model_name=predictor.meta["best_model"],
-                               result=result, input_data=data,
-                               auto_fields=AUTO_FIELDS, states=STATES,
-                               shc_id=(request.form.get("shc_id") or "").strip())
-    except Exception as e:
-        return render_template("index.html", crops=CROPS, soils=SOILS,
-                               model_name=predictor.meta["best_model"],
-                               error=str(e), auto_fields=AUTO_FIELDS,
-                               shc_id=(request.form.get("shc_id") or "").strip())
-
-
-@app.route("/recommend", methods=["POST"])
-def recommend():
-    try:
-        data, _ = build_data(request.form)
-        data.pop("Crop", None)
-        recs = predictor.recommend_crops(data, top_n=3)
-        return render_template("index.html", crops=CROPS, soils=SOILS,
-                               model_name=predictor.meta["best_model"],
-                               recommendations=recs, input_data=data,
-                               auto_fields=AUTO_FIELDS, states=STATES,
-                               shc_id=(request.form.get("shc_id") or "").strip())
-    except Exception as e:
-        return render_template("index.html", crops=CROPS, soils=SOILS,
-                               model_name=predictor.meta["best_model"],
-                               error=str(e), auto_fields=AUTO_FIELDS,
-                               shc_id=(request.form.get("shc_id") or "").strip())
-
+    body = request.get_json(force=True, silent=True) or {}
+    st = body.get("state")
+    rf = STATE_WEATHER.get(st, {}).get("rainfall", 1150)
+    return jsonify({"state": st, "rainfall": rf,
+                   "message": f"{st}: rainfall {rf} mm (IMD)"})
 
 @app.route("/api/predict", methods=["POST"])
 def api_predict():
-    try:
-        data = request.get_json(force=True)
-        # allow partial: fill missing from defaults
-        crop = data.get("Crop")
-        defaults = predictor.default_inputs(crop) if crop else {}
-        for k in ["Rainfall", "Temperature", "Humidity", "pH", "N", "P", "K"]:
-            if k not in data or data[k] in (None, ""):
-                data[k] = defaults.get(k, 0)
-        result = predictor.predict(data)
-        return jsonify({"status": "ok", **result})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 400
-
+    f = request.form if request.form else (request.get_json(force=True, silent=True) or {})
+    crop = f.get("crop"); soil = f.get("soil")
+    if not crop or not soil:
+        return jsonify({"error": "Crop and Soil Type are required."}), 400
+    res = predictor.predict(crop, soil,
+                            rainfall=_f(f.get("rainfall")),
+                            temperature=_f(f.get("temperature")),
+                            humidity=_f(f.get("humidity")),
+                            soil_ph=_f(f.get("soil_ph")),
+                            n=_f(f.get("n")), p=_f(f.get("p")), k=_f(f.get("k")))
+    return jsonify(res)
 
 @app.route("/api/recommend", methods=["POST"])
 def api_recommend():
-    try:
-        data = request.get_json(force=True)
-        defaults = predictor.default_inputs(data.get("Crop")) if data.get("Crop") else {}
-        for k in ["Rainfall", "Temperature", "Humidity", "pH", "N", "P", "K"]:
-            if k not in data or data[k] in (None, ""):
-                data[k] = defaults.get(k, 0)
-        data.pop("Crop", None)
-        recs = predictor.recommend_crops(data, top_n=3)
-        return jsonify({"status": "ok", "recommendations": recs})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 400
+    f = request.form if request.form else (request.get_json(force=True, silent=True) or {})
+    soil = f.get("soil") or (f.get("soil_type"))
+    if not soil:
+        return jsonify({"error": "Soil Type is required for recommendation."}), 400
+    return jsonify({"soil": soil, "top3": predictor.recommend_crops(
+        soil, rainfall=_f(f.get("rainfall")), temperature=_f(f.get("temperature")),
+        humidity=_f(f.get("humidity")), soil_ph=_f(f.get("soil_ph")),
+        n=_f(f.get("n")), p=_f(f.get("p")), k=_f(f.get("k")))})
 
+@app.route("/api/chat", methods=["POST"])
+def api_chat():
+    body = request.get_json(force=True, silent=True) or {}
+    msg = (body.get("message") or "").strip()
+    if not msg:
+        return jsonify({"error": "Empty message."}), 400
+    history = session.get("chat_history", [])
+    reply, status, audio = agri_chat(msg, history=history)
+    if status == "ok":
+        history.append({"user": msg, "ai": reply})
+        session["chat_history"] = history[-8:]
+    return jsonify({"reply": reply, "status": status,
+                    "available": chat_available(), "audio": audio})
+
+@app.route("/api/chat/clear", methods=["POST"])
+def api_chat_clear():
+    session["chat_history"] = []
+    return jsonify({"ok": True})
+
+@app.route("/api/chat/transcribe", methods=["POST"])
+def api_transcribe():
+    if "audio" not in request.files:
+        return jsonify({"error": "No audio file."}), 400
+    f = request.files["audio"]
+    data = f.read()
+    text, status = agri_transcribe(data, f.filename or "audio.webm")
+    return jsonify({"text": text, "status": status})
+
+@app.route("/api/chat/speak", methods=["POST"])
+def api_speak():
+    body = request.get_json(force=True, silent=True) or {}
+    text = (body.get("text") or "").strip()
+    if not text:
+        return jsonify({"error": "Empty text."}), 400
+    b64, status = agri_speak(text, body.get("lang", "te"))
+    return jsonify({"audio": b64, "status": status})
+
+@app.route("/api/diagnose", methods=["POST"])
+def api_diagnose():
+    if "image" not in request.files:
+        return jsonify({"error": "No image file."}), 400
+    f = request.files["image"]
+    data = f.read()
+    result, status = agri_diagnose(data, f.filename or "image.jpg")
+    return jsonify({"result": result, "status": status})
 
 if __name__ == "__main__":
-    app.run(debug=True, host="127.0.0.1", port=5000)
+    app.run(debug=False, host="127.0.0.1", port=5000)

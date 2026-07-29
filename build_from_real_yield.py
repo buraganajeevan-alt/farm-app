@@ -1,105 +1,114 @@
+"""build_from_real_yield.py  (REVISED — Option A: real district-level weather)
+Builds a clean 10-column modelling CSV from THREE real, public sources:
+  1) realdata/crop_production.csv     -> State/District/Crop/Area/Production (Indian agri stats)
+  2) realdata/crop_recommendation.csv -> per-crop agronomic means (N,P,K,temp,humidity,ph)
+  3) realdata/district_rainfall.csv    -> REAL district-level ANNUAL rainfall (IMD, public)
+
+KEY FIX: rainfall is now the REAL per-district value (varies record-to-record),
+NOT a constant per-crop mean. This gives the model real weather signal so it
+can learn weather->yield (previously rainfall/temp/humidity had ~0 importance).
+Soil_Type: coarse dominant-order proxy by state (NBSS&LUP, documented).
 """
-build_from_real_yield.py
-------------------------
-Builds the project dataset from a REAL measured-yield dataset:
-  punit_yeild.csv  (241,226 rows)
-  Columns present (REAL): Crop, annual_rainfall, yeild (measured),
-  Soil Type, Soil pH, State, District, Season, Year, Area, Production.
+import csv, json
+from collections import defaultdict
 
-This is the genuine article: Yield is measured production/area, not derived.
+PROD = "realdata/crop_production.csv"
+RECO = "realdata/crop_recommendation.csv"
+RAIN = "realdata/district_rainfall.csv"
+OUT  = "data/crop_yield.csv"
 
-What we have vs. your 10-col schema:
-  Crop            <- REAL (Crop)
-  Soil_Type       <- REAL (Soil Type)
-  Rainfall        <- REAL (annual_rainfall)
-  Temperature     <- NOT in source  -> filled from real crop-optima (crop_recommendation.csv)
-  Humidity        <- NOT in source  -> filled from real crop-optima
-  pH              <- REAL (Soil pH)
-  N, P, K        <- NOT in source  -> filled from real crop-optima
-  Yield           <- REAL (yeild)
+STATE_SOIL = {
+    "Andaman and Nicobar Islands":"Loamy","Andhra Pradesh":"Red","Arunachal Pradesh":"Loamy",
+    "Assam":"Alluvial","Bihar":"Alluvial","Chandigarh":"Loamy","Chhattisgarh":"Red",
+    "Dadra and Nagar Haveli":"Loamy","Daman and Diu":"Loamy","Delhi":"Loamy",
+    "Goa":"Laterite","Gujarat":"Black","Haryana":"Loamy","Himachal Pradesh":"Brown",
+    "Jammu and Kashmir":"Brown","Jharkhand":"Red","Karnataka":"Red","Kerala":"Laterite",
+    "Ladakh":"Brown","Lakshadweep":"Loamy","Madhya Pradesh":"Black","Maharashtra":"Black",
+    "Manipur":"Loamy","Meghalaya":"Laterite","Mizoram":"Loamy","Nagaland":"Loamy",
+    "Odisha":"Red","Puducherry":"Loamy","Punjab":"Loamy","Rajasthan":"Desert",
+    "Sikkim":"Loamy","Tamil Nadu":"Red","Telangana":"Red","Tripura":"Loamy",
+    "Uttar Pradesh":"Alluvial","Uttarakhand":"Brown","West Bengal":"Alluvial",
+}
 
-Temperature/Humidity/N/P/K are taken from the separate real crop
-recommendation dataset's per-crop means, so they are real agronomic
-values (not invented), just not from the same record. Documented in paper.
-
-Output: data/crop_yield.csv  (YOUR 10 columns)
-"""
-import csv, os, statistics as st
-
-REAL_YIELD = os.path.join("realdata", "real_yield_dataset.csv")
-REAL_CROP  = os.path.join("realdata", "crop_recommendation.csv")
-OUT = os.path.join("data", "crop_yield.csv")
-
-# --- load real crop-recommendation means (N,P,K,temp,humidity,ph,rain) ---
-crop_opt = {}
-with open(REAL_CROP) as f:
+# ---- 1. REAL district rainfall (annual, mm) ----
+district_rain = {}
+with open(RAIN, encoding="utf-8") as f:
     for r in csv.DictReader(f):
-        c = r["label"].strip().lower()
-        d = crop_opt.setdefault(c, {"N":[], "P":[], "K":[], "temp":[],
-                                     "hum":[], "ph":[], "rain":[]})
-        d["N"].append(float(r["N"])); d["P"].append(float(r["P"]))
-        d["K"].append(float(r["K"])); d["temp"].append(float(r["temperature"]))
-        d["hum"].append(float(r["humidity"])); d["ph"].append(float(r["ph"]))
-        d["rain"].append(float(r["rainfall"]))
-for c, d in crop_opt.items():
-    for k in d:
-        d[k] = st.mean(d[k])
-
-# map dataset crop names -> recommendation crop names where possible
-def match_crop(name):
-    n = name.strip().lower()
-    # direct
-    if n in crop_opt: return n
-    # fuzzy contain
-    for k in crop_opt:
-        if k in n or n in k:
-            return k
-    return None
-
-# Real soil types present in source; keep as-is.
-os.makedirs("data", exist_ok=True)
-n_written = 0
-n_skipped = 0
-seen_crops = set()
-
-with open(REAL_YIELD, encoding="utf-8") as fin, \
-     open(OUT, "w", newline="") as fout:
-    rd = csv.DictReader(fin)
-    w = csv.writer(fout)
-    w.writerow(["Crop","Soil_Type","Rainfall","Temperature","Humidity",
-                "pH","N","P","K","Yield"])
-    for row in rd:
+        st = r["STATE_UT_NAME"].strip().upper()
+        dt = r["DISTRICT"].strip().upper()
         try:
-            crop = row["Crop"].strip().capitalize()
-            soil = row["Soil Type"].strip()
-            rain = float(row["annual_rainfall"])
-            ph = float(row["Soil pH"])
-            yld = float(row["yeild"])
-        except (ValueError, KeyError):
-            n_skipped += 1
+            ann = float(r["ANNUAL"])
+        except:
             continue
-        if yld <= 0 or rain <= 0 or ph <= 0:
-            n_skipped += 1
+        if ann <= 0:
             continue
-        # optional inputs from real crop-optima if crop matches
-        mc = match_crop(row["Crop"])
-        if mc:
-            o = crop_opt[mc]
-            temp = round(o["temp"],1); hum = round(o["hum"],1)
-            n_ = round(o["N"],1); p_ = round(o["P"],1); k_ = round(o["K"],1)
-        else:
-            # generic fallback (real recommendation dataset average)
-            temp = round(st.mean([v["temp"] for v in crop_opt.values()]),1)
-            hum  = round(st.mean([v["hum"] for v in crop_opt.values()]),1)
-            n_   = round(st.mean([v["N"] for v in crop_opt.values()]),1)
-            p_   = round(st.mean([v["P"] for v in crop_opt.values()]),1)
-            k_   = round(st.mean([v["K"] for v in crop_opt.values()]),1)
-        w.writerow([crop, soil, round(rain,1), temp, hum,
-                    round(ph,2), n_, p_, k_, round(yld,3)])
-        seen_crops.add(crop)
-        n_written += 1
+        district_rain[(st, dt)] = ann
+        # also keep a state average fallback
+        district_rain.setdefault(("__STATE__", st), []).append(ann)
 
-print(f"REAL yield dataset built: {OUT}")
-print(f"  rows written: {n_written} | skipped: {n_skipped}")
-print(f"  distinct crops: {len(seen_crops)}")
-print("  crops:", ", ".join(sorted(seen_crops)))
+# state-average rainfall (for records whose exact district isn't in the rainfall file)
+state_avg_rain = {}
+for (k, st), v in list(district_rain.items()):
+    if k == "__STATE__":
+        state_avg_rain[st] = sum(v) / len(v)
+
+def rainfall_for(state, district):
+    st = state.strip().upper(); dt = district.strip().upper()
+    if (st, dt) in district_rain:
+        return district_rain[(st, dt)]
+    if st in state_avg_rain:
+        return state_avg_rain[st]
+    return 1150.0  # national mean fallback
+
+# ---- 2. per-crop means (N,P,K,temp,humidity,ph) ----
+crop_mean = defaultdict(lambda: defaultdict(list))
+with open(RECO, encoding="utf-8") as f:
+    for row in csv.DictReader(f):
+        c = row["label"].strip().lower()
+        for k in ["N","P","K","temperature","humidity","ph"]:
+            try: crop_mean[c][k].append(float(row[k]))
+            except: pass
+def mean(lst): return sum(lst)/len(lst) if lst else None
+crop_stats = {c: {k: mean(v) for k, v in d.items()} for c, d in crop_mean.items()}
+
+# ---- 3. production -> yield, join REAL district rainfall ----
+rows_out = []
+with open(PROD, encoding="utf-8") as f:
+    for row in csv.DictReader(f):
+        try:
+            area = float(row["Area"].strip()); prod = float(row["Production"].strip())
+        except:
+            continue
+        if area <= 0: continue
+        yield_t = prod / area
+        if yield_t <= 0 or yield_t > 70: continue
+        crop = row["Crop"].strip().lower()
+        state = row["State_Name"].strip()
+        district = row["District_Name"].strip()
+        soil = STATE_SOIL.get(state, "Loamy")
+        cs = crop_stats.get(crop)
+        if not cs: continue
+        rf = rainfall_for(state, district)
+        rows_out.append({
+            "Crop": crop, "Soil_Type": soil,
+            "Rainfall": round(rf, 1),
+            "Temperature": round(cs["temperature"], 2),
+            "Humidity": round(cs["humidity"], 2),
+            "Soil_pH": round(cs["ph"], 2),
+            "N": round(cs["N"], 1), "P": round(cs["P"], 1), "K": round(cs["K"], 1),
+            "Yield_tons_per_ha": round(yield_t, 3),
+        })
+
+cols = ["Crop","Soil_Type","Rainfall","Temperature","Humidity","Soil_pH","N","P","K","Yield_tons_per_ha"]
+with open(OUT, "w", newline="", encoding="utf-8") as f:
+    w = csv.DictWriter(f, fieldnames=cols); w.writeheader(); w.writerows(rows_out)
+
+# report
+import statistics
+crops = sorted(set(r["Crop"] for r in rows_out))
+rains = [r["Rainfall"] for r in rows_out]
+ys = [r["Yield_tons_per_ha"] for r in rows_out]
+print(f"WROTE {OUT}: {len(rows_out)} rows, {len(crops)} crops")
+print(f"Rainfall now VARIES: min={min(rains)} max={max(rains)} mean={statistics.mean(rains):.0f} (was constant per crop before)")
+print(f"Yield mean={statistics.mean(ys):.2f} median={statistics.median(ys):.2f}")
+print("Crops:", crops)

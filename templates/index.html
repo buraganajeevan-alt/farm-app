@@ -1,308 +1,418 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Farming — AI Crop Yield Prediction</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgriYield — AI Crop Yield Intelligence</title>
 <style>
-  /* Design system: Organic Biophilic + Plant Care Tracker palette (UI/UX Pro Max) */
   :root{
-    --forest:#15803D; --forest-deep:#0F172A; --leaf:#059669;
-    --sun:#D97706; --sky:#87CEEB; --cream:#F5F5DC;
-    --bg:#F0FDF4; --card:#FFFFFF; --fg:#0F172A;
-    --muted:#64748B; --border:#E2EFE7; --ring:#15803D;
-    --radius:24px; --radius-sm:14px;
-    --shadow:0 8px 32px rgba(21,128,61,.08);
-    --shadow-lg:0 18px 50px rgba(21,128,61,.14);
+    --green-900:#14532d; --green-700:#15803d; --green-600:#16a34a;
+    --green-50:#f0fdf4; --green-100:#dcfce7; --green-200:#bbf7d0;
+    --ink:#0f172a; --muted:#64748b; --line:#e2e8f0;
+    --card:#ffffff; --bg:#f8fafc; --amber:#b45309; --shadow:0 1px 2px rgba(15,23,42,.04),0 8px 24px rgba(15,23,42,.06);
   }
-  *{box-sizing:border-box;}
-  html{scroll-behavior:smooth;}
-  body{
-    font-family:'Plus Jakarta Sans',-apple-system,Segoe UI,sans-serif;
-    margin:0;background:var(--bg);color:var(--fg);line-height:1.55;
-    background-image:radial-gradient(circle at 12% 8%,rgba(133,227,169,.18),transparent 38%),
-                     radial-gradient(circle at 88% 0%,rgba(135,206,235,.14),transparent 40%);
-  }
-  header{
-    background:linear-gradient(135deg,#15803D 0%,#0B5E2A 55%,#063D1C 100%);
-    color:#fff;padding:46px 20px 64px;position:relative;overflow:hidden;text-align:center;
-  }
-  header::after{
-    content:"";position:absolute;left:0;right:0;bottom:-2px;height:42px;
-    background:var(--bg);
-    border-radius:50% 50% 0 0/100% 100% 0 0;
-  }
-  header .leaf{font-size:2.6rem;display:block;margin-bottom:6px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.25));}
-  header h1{margin:0;font-size:clamp(1.5rem,3.4vw,2.3rem);font-weight:800;letter-spacing:-.02em;}
-  header p{margin:12px auto 0;max-width:640px;opacity:.92;font-size:1rem;font-weight:400;}
-  .container{max-width:960px;margin:-34px auto 40px;padding:0 16px;position:relative;z-index:2;}
-
-  .intro{
-    background:linear-gradient(135deg,#ECFDF3,#F0FDF4);
-    border:1px solid var(--border);border-left:5px solid var(--leaf);
-    padding:16px 18px;border-radius:var(--radius-sm);font-size:.92rem;color:#134E2B;
-    box-shadow:var(--shadow);margin-bottom:20px;
-  }
-  .intro b{color:var(--forest);}
-
-  form{
-    background:var(--card);padding:26px;border-radius:var(--radius);
-    box-shadow:var(--shadow-lg);border:1px solid var(--border);
-  }
-  .step-tag{
-    display:inline-flex;align-items:center;gap:8px;font-size:.78rem;font-weight:700;
-    color:var(--leaf);background:#ECFDF3;padding:5px 12px;border-radius:999px;
-    text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;
-  }
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-  .opt{opacity:.96;}
-  label{display:block;font-size:.84rem;font-weight:600;margin-bottom:6px;color:#334155;}
-  .hint{font-size:.73rem;color:var(--muted);font-weight:400;margin-top:4px;}
-  .req{color:#DC2626;font-weight:700;}
-  input,select{
-    width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);
-    font-size:.95rem;font-family:inherit;background:#FBFEFC;color:var(--fg);transition:.18s;
-  }
-  input:focus,select:focus{outline:none;border-color:var(--ring);box-shadow:0 0 0 4px rgba(21,128,61,.12);}
-  .loc-btn{
-    background:#ECFDF3;color:var(--forest);border:1.5px solid var(--border);
-    width:auto;padding:9px 15px;font-size:.88rem;font-weight:600;border-radius:999px;cursor:pointer;
-    display:inline-flex;align-items:center;gap:7px;transition:.18s;
-  }
-  .loc-btn:hover{background:var(--forest);color:#fff;}
-  #geoStatus{font-size:.82rem;color:var(--leaf);margin-left:10px;font-weight:500;}
-  .btns{display:flex;gap:14px;margin-top:22px;flex-wrap:wrap;}
-  button.action{
-    flex:1;min-width:210px;padding:15px;border:0;border-radius:var(--radius-sm);
-    font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;transition:.18s;
-    display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  }
-  .btn-predict{background:linear-gradient(135deg,#15803D,#0B5E2A);color:#fff;box-shadow:0 10px 24px rgba(21,128,61,.28);}
-  .btn-rec{background:linear-gradient(135deg,#D97706,#B45309);color:#fff;box-shadow:0 10px 24px rgba(217,119,6,.26);}
-  button.action:hover{transform:translateY(-2px);filter:brightness(1.04);}
-
-  .result{margin-top:24px;background:var(--card);padding:26px;border-radius:var(--radius);box-shadow:var(--shadow-lg);border:1px solid var(--border);}
-  .result h2{margin:0 0 14px;font-size:1.3rem;font-weight:800;color:var(--forest);}
-  .big{font-size:2.6rem;font-weight:800;color:var(--forest);line-height:1;}
-  .unit{font-size:1rem;font-weight:600;color:var(--muted);margin-left:6px;}
-  .badge{display:inline-flex;align-items:center;padding:5px 14px;border-radius:999px;font-size:.84rem;font-weight:700;margin-left:8px;vertical-align:middle;}
-  .ok{background:#DCFCE7;color:#166534;}
-  .no{background:#FEE2E2;color:#991B1B;}
-  .meta-row{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:14px;font-size:.95rem;}
-  .sugg{margin-top:18px;}
-  .sugg h3{font-size:1.02rem;margin:0 0 8px;color:#134E2B;}
-  ul.clean{margin:0;padding-left:0;list-style:none;}
-  ul.clean li{
-    background:#F0FDF4;border:1px solid var(--border);padding:11px 14px;border-radius:var(--radius-sm);
-    margin-bottom:8px;font-size:.92rem;display:flex;gap:10px;align-items:flex-start;
-  }
-  ul.clean li::before{content:"🌱";}
-  .rank{
-    display:flex;align-items:center;justify-content:space-between;padding:16px 18px;margin:10px 0;
-    border:1px solid var(--border);border-radius:var(--radius-sm);background:#FBFEFC;transition:.18s;
-  }
-  .rank:hover{box-shadow:var(--shadow);transform:translateY(-1px);}
-  .rank .name{font-weight:700;font-size:1.08rem;display:flex;align-items:center;gap:10px;}
-  .rank .yield{color:var(--forest);font-weight:800;font-size:1.1rem;}
-  .medal{font-size:1.3rem;}
-  .err{color:#991B1B;background:#FEE2E2;padding:14px;border-radius:var(--radius-sm);font-weight:600;}
-  .defbox{background:#FFFBEB;border:1px solid #FDE68A;padding:12px 16px;border-radius:var(--radius-sm);font-size:.84rem;color:#92400E;margin-top:18px;}
-  .note{font-size:.8rem;color:var(--muted);margin-top:18px;line-height:1.6;}
-  hr{border:none;border-top:1px solid var(--border);margin:26px 0;}
-  .footer-cta{text-align:center;margin-top:30px;color:var(--muted);font-size:.85rem;}
-  @media(max-width:640px){.grid{grid-template-columns:1fr;}.btns{flex-direction:column;}header{padding:36px 16px 56px;}}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:'Segoe UI',-apple-system,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+  /* Header */
+  header{background:linear-gradient(135deg,var(--green-900),var(--green-700));color:#fff;padding:0;border-bottom:1px solid rgba(255,255,255,.08)}
+  .nav{max-width:1040px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:16px 22px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:40px;height:40px;border-radius:11px;background:rgba(255,255,255,.14);display:grid;place-items:center;font-size:22px}
+  .brand h1{font-size:1.18rem;margin:0;font-weight:650;letter-spacing:.2px}
+  .brand p{margin:0;font-size:.78rem;opacity:.8}
+  .nav .pill{margin-left:auto;background:rgba(255,255,255,.14);padding:6px 13px;border-radius:999px;font-size:.76rem;font-weight:600}
+  /* Layout */
+  main{max-width:1040px;margin:26px auto;padding:0 22px 48px}
+  .grid2{display:grid;grid-template-columns:1.15fr .85fr;gap:22px;align-items:start}
+  @media(max-width:880px){.grid2{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+  .card-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:11px}
+  .card-head .ic{width:34px;height:34px;border-radius:9px;background:var(--green-50);color:var(--green-700);display:grid;place-items:center;font-size:18px}
+  .card-head h2{margin:0;font-size:1.02rem;font-weight:650}
+  .card-head span{display:block;font-size:.76rem;color:var(--muted);font-weight:400}
+  .card-body{padding:20px 22px}
+  /* Form */
+  .field{margin-bottom:14px}
+  .field > label{display:flex;align-items:center;gap:7px;font-size:.82rem;font-weight:600;margin-bottom:6px;color:#334155}
+  .req{color:var(--green-600);font-weight:800}
+  .hint{font-size:.72rem;color:var(--muted);font-weight:400}
+  select,input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:.92rem;background:#fff;color:var(--ink);transition:border-color .15s,box-shadow .15s}
+  select:focus,input:focus{outline:none;border-color:var(--green-600);box-shadow:0 0 0 3px var(--green-100)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px}
+  @media(max-width:560px){.row2,.row3{grid-template-columns:1fr}}
+  .autofill{font-size:.72rem;color:var(--amber);display:flex;align-items:center;gap:5px;margin-top:4px}
+  /* Buttons */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:11px;padding:13px 18px;font-size:.95rem;font-weight:600;cursor:pointer;transition:transform .08s,background .15s,opacity .15s}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--green-600);color:#fff;width:100%;margin-top:6px}
+  .btn-primary:hover{background:var(--green-700)}
+  .btn-ghost{background:var(--green-50);color:var(--green-700);padding:9px 14px;font-size:.84rem}
+  .btn-ghost:hover{background:var(--green-100)}
+  /* GPS bar */
+  .gps{display:flex;align-items:center;gap:10px;background:var(--green-50);border:1px solid var(--green-100);border-radius:11px;padding:11px 13px;margin-bottom:16px}
+  .gps .status{font-size:.8rem;color:var(--green-700);font-weight:500}
+  .gps .status.err{color:#b91c1c}
+  /* Output report */
+  .report{margin-top:18px;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:none}
+  .report.show{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .report .r-head{background:var(--green-900);color:#fff;padding:13px 18px;display:flex;justify-content:space-between;align-items:center}
+  .report .r-head .yield{font-size:1.45rem;font-weight:700}
+  .report .r-head small{display:block;font-size:.72rem;opacity:.8;font-weight:400}
+  .report .r-body{padding:16px 18px}
+  .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:0 0 14px}
+  .kv .cell{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 11px}
+  .kv .cell b{display:block;font-size:.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+  .kv .cell span{font-size:.92rem;font-weight:600}
+  .bars{font-size:.8rem}
+  .bars .b{display:flex;align-items:center;gap:9px;margin:6px 0}
+  .bars .b .nm{width:96px;color:#334155;font-weight:500}
+  .bars .b .track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+  .bars .b .fill{height:100%;background:linear-gradient(90deg,var(--green-600),var(--green-700));border-radius:99px}
+  .bars .b .val{width:46px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+  /* Recommend list */
+  .rec{display:flex;flex-direction:column;gap:11px;margin-top:8px}
+  .rec .item{display:flex;align-items:center;gap:14px;padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:#fff}
+  .rec .rank{width:30px;height:30px;border-radius:50%;background:var(--green-600);color:#fff;display:grid;place-items:center;font-weight:700;font-size:.85rem;flex:none}
+  .rec .item:nth-child(2) .rank{background:#0891b2}
+  .rec .item:nth-child(3) .rank{background:#7c3aed}
+  .rec .meta{flex:1}
+  .rec .meta b{font-size:.95rem}
+  .rec .meta small{display:block;color:var(--muted);font-size:.74rem}
+  .rec .yield{font-weight:700;color:var(--green-700);font-size:1.02rem;white-space:nowrap}
+  .rec .yield small{display:block;text-align:right;color:var(--muted);font-weight:400;font-size:.68rem}
+  /* Side metrics */
+  .side .card-body{padding:16px 18px}
+  .metric{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px dashed var(--line);font-size:.86rem}
+  .metric:last-child{border-bottom:0}
+  .metric b{font-size:1.05rem;color:var(--green-700)}
+  .tag{display:inline-block;background:var(--green-100);color:var(--green-900);font-size:.7rem;font-weight:600;padding:3px 9px;border-radius:99px;margin:3px 4px 0 0}
+  .note{font-size:.74rem;color:var(--muted);margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+  footer{max-width:1040px;margin:0 auto;padding:20px 22px 40px;color:var(--muted);font-size:.76rem;text-align:center}
+  .iconbtn{display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:10px 14px;font-size:1.5rem;cursor:pointer;min-width:78px;transition:.15s}
+  .iconbtn small{font-size:.66rem;color:var(--muted);font-weight:600}
+  .iconbtn:hover{border-color:var(--green-600);background:var(--green-100)}
+  .iconbtn:active{transform:scale(.96)}
+  #micBtn.recording{background:#dc2626;color:#fff;border-color:#dc2626}
 </style>
 </head>
 <body>
 <header>
-  <span class="leaf">🌾</span>
-  <h1>Smart Farming — AI Crop Yield Prediction</h1>
-  <p>Tell us your <b>crop &amp; soil</b> — our AI fills the rest from regional data and predicts your yield, suitability &amp; best crops to grow.</p>
+  <div class="nav">
+    <div class="brand">
+      <div class="logo">🌾</div>
+      <div>
+        <h1>AgriYield</h1>
+        <p>AI Crop Yield Intelligence Platform</p>
+      </div>
+    </div>
+    <div class="pill">Prototype · v2.0</div>
+  </div>
 </header>
 
-<div class="container">
-  <div class="intro">
-    <b>Farmer-first:</b> you only need your <b>Crop</b> and <b>Soil Type</b>. Rainfall, temperature,
-    humidity, pH and N/P/K are <b>auto-filled</b> from typical regional values (stand-in for government open
-    data: IMD, Soil Health Card, NBSS&amp;LUP). Have your <b>Soil Health Card</b>? Enter its <b>SHC ID</b> and we
-    auto-fill your plot-specific pH, N, P &amp; K for a sharper prediction.
-  </div>
-
-  <form method="POST" action="/predict">
-    <span class="step-tag">Step 1 · Your Farm</span>
-    <div style="margin-bottom:14px;">
-      <button type="button" class="loc-btn" onclick="useLocation()">📍 Use my location (GPS)</button>
-      <span id="geoStatus"></span>
-    </div>
-    <div class="grid">
-      <div>
-        <label>State / Region (regional weather)</label>
-        <select name="state" onchange="statePicked(this.value)">
-          <option value="">— auto (GPS or default) —</option>
-          {% for st in states %}<option value="{{st}}" {% if input_data and input_data.get('state')==st %}selected{% endif %}>{{st}}</option>{% endfor %}
-        </select>
+<main>
+  <div class="grid2">
+    <!-- LEFT: Predict -->
+    <section class="card">
+      <div class="card-head">
+        <div class="ic">📈</div>
+        <div><h2>Yield Prediction</h2><span>Estimate tons/ha for your chosen crop &amp; soil</span></div>
       </div>
-      <div>
-        <label><span class="req">*</span> Crop Name</label>
-        <select name="crop" required>
-          {% for c in crops %}<option value="{{c}}" {% if input_data and input_data.Crop==c %}selected{% endif %}>{{c}}</option>{% endfor %}
-        </select>
+      <div class="card-body">
+        <div class="gps">
+          <button type="button" class="btn-ghost" onclick="useLocation()">📍 Detect my region (GPS)</button>
+          <span id="geoStatus" class="status"></span>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>State / Region <span class="hint">(optional)</span></label>
+            <select id="state" onchange="statePicked()">
+              <option value="">— select —</option>
+              {% for s in states %}<option value="{{s}}">{{s}}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label>Soil Type <span class="req">*</span></label>
+            <select id="soil" required>
+              <option value="">— choose —</option>
+              {% for s in soils %}<option value="{{s}}">{{s}}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>Crop <span class="req">*</span></label>
+            <select id="crop" required>
+              <option value="">— choose —</option>
+              {% for c in crops %}<option value="{{c}}">{{c}}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label>Rainfall (mm) <span class="hint">auto-filled</span></label>
+            <input id="rainfall" type="number" step="any" placeholder="auto">
+            <div class="autofill">⚙️ Filled from IMD regional data</div>
+          </div>
+        </div>
+
+        <div class="row3">
+          <div class="field">
+            <label>Temp (°C)</label>
+            <input id="temperature" type="number" step="any" placeholder="auto">
+          </div>
+          <div class="field">
+            <label>Humidity (%)</label>
+            <input id="humidity" type="number" step="any" placeholder="auto">
+          </div>
+          <div class="field">
+            <label>Soil pH</label>
+            <input id="soil_ph" type="number" step="any" placeholder="auto">
+          </div>
+        </div>
+
+        <div class="row3">
+          <div class="field">
+            <label>N (kg/ha)</label>
+            <input id="n" type="number" step="any" placeholder="auto">
+          </div>
+          <div class="field">
+            <label>P (kg/ha)</label>
+            <input id="p" type="number" step="any" placeholder="auto">
+          </div>
+          <div class="field">
+            <label>K (kg/ha)</label>
+            <input id="k" type="number" step="any" placeholder="auto">
+          </div>
+        </div>
+        <div class="autofill" style="margin:-4px 0 4px">🪪 pH / N / P / K auto-fill from Soil Health Card means — override with your own readings</div>
+
+        <button class="btn btn-primary" onclick="predict()">🔍 Predict Yield</button>
+
+        <div id="predOut" class="report">
+          <div class="r-head">
+            <div><small>Predicted yield</small><div class="yield" id="rYield">—</div></div>
+            <div style="text-align:right"><small id="rCrop">—</small></div>
+          </div>
+          <div class="r-body">
+            <div class="kv" id="rInputs"></div>
+            <div style="font-size:.78rem;font-weight:600;color:#334155;margin-bottom:6px">Top yield drivers (permutation importance)</div>
+            <div class="bars" id="rBars"></div>
+          </div>
+        </div>
+
+        <p class="note">Only <b>Crop</b> and <b>Soil Type</b> are required. All other fields auto-populate from real regional / per-crop reference data and can be edited.</p>
       </div>
-      <div>
-        <label><span class="req">*</span> Soil Type</label>
-        <select name="soil" required>
-          {% for s in soils %}<option value="{{s}}" {% if input_data and input_data.Soil_Type==s %}selected{% endif %}>{{s}}</option>{% endfor %}
-        </select>
+    </section>
+
+    <!-- RIGHT: Recommend + metrics -->
+    <aside class="side">
+      <section class="card" style="margin-bottom:22px">
+        <div class="card-head">
+          <div class="ic">🏆</div>
+          <div><h2>Best 3 Crops</h2><span>Ranked by model-predicted yield using your parameters</span></div>
+        </div>
+        <div class="card-body">
+          <p class="note" style="margin-top:0">Uses the Crop/Soil and the parameters you entered above (rainfall, temperature, humidity, pH, N/P/K). Adjust them for your farm, then rank.</p>
+          <button class="btn btn-primary" onclick="recommend()">🥇 Recommend Top 3</button>
+          <div id="recOut" class="rec" style="display:none;margin-top:16px"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div class="ic">🤖</div>
+          <div><h2>Model</h2><span>Benchmarked on real data</span></div>
+        </div>
+        <div class="card-body">
+          <div class="metric"><span>Deployed model</span><b>{{best}}</b></div>
+          <div class="metric"><span>R² (accuracy)</span><b>{{metrics.R2}}</b></div>
+          <div class="metric"><span>RMSE</span><b>{{metrics.RMSE}}</b></div>
+          <div class="metric"><span>Crops covered</span><b>{{crops|length}}</b></div>
+          <div style="margin-top:12px">
+            <span class="tag">7 models compared</span>
+            <span class="tag">Permutation importance</span>
+            <span class="tag">Explainable</span>
+            <span class="tag">Real dataset</span>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </div>
+  <section class="card" style="margin-top:22px">
+    <div class="card-head">
+      <div class="ic">🤖</div>
+      <div><h2>Ask AI — AgriAI</h2><span>Talk or tap. Spoken answers in Telugu.</span></div>
+    </div>
+    <div class="card-body">
+      <div id="chatLog" style="height:260px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:12px;background:#f8fafc;font-size:.95rem"></div>
+
+      <!-- Icon-only quick buttons (no reading needed) -->
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px">
+        <button class="iconbtn" onclick="quickAsk('మా నేలకు ఏ పంట మంచిది?')">🌾<small>Best crop</small></button>
+        <button class="iconbtn" onclick="quickAsk('వరి పంటకు ఎరువులు ఎంత ఇవ్వాలి?')">💩<small>Fertilizer</small></button>
+        <button class="iconbtn" onclick="quickAsk('మొక్కలో తెగులు ఉంటే ఏం చేయాలి?')">🌿<small>Disease</small></button>
+        <button class="iconbtn" onclick="quickAsk('నా పొలంలో ఎంత దిగుబడి వస్తుంది?')">📊<small>Yield</small></button>
+        <button class="iconbtn" onclick="quickAsk('చిన్న రైతులకు ప్రభుత్వ పథకాలు ఏమిటి?')">🏛️<small>Schemes</small></button>
       </div>
-    </div>
 
-    <span class="step-tag" style="margin-top:22px;">Step 2 · Soil Health Card (optional)</span>
-    <div style="margin-bottom:14px;">
-      <label>Soil Health Card ID (auto-fills your soil test values)</label>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-        <input type="text" name="shc_id" id="shcId" value="{% if shc_id %}{{shc_id}}{% endif %}" placeholder="e.g. SHC2024AP001" style="max-width:260px;"
-               onchange="lookupSHC(this.value)" autocomplete="off">
-        <button type="button" class="loc-btn" onclick="lookupSHC(document.getElementById('shcId').value)">🔎 Load card</button>
-        <span id="shcStatus"></span>
+      <div class="row2" style="margin-top:12px;align-items:flex-end">
+        <div class="field" style="flex:1">
+          <label>Tap 🎤 and speak in Telugu (or type)</label>
+          <input id="chatInput" type="text" placeholder="మీ ప్రశ్న ఇక్కడ రాయండి / type here" onkeydown="if(event.key==='Enter')askAI()">
+        </div>
+        <button id="micBtn" class="btn-ghost" onclick="toggleMic()" title="Hold to speak">🎤</button>
+        <button class="btn" onclick="askAI()">Send</button>
+        <button class="btn-ghost" onclick="clearChat()">Clear</button>
       </div>
-      <div class="hint">Enter your 12-digit Soil Health Card number. pH, N, P, K are filled automatically. Leave blank to use regional defaults.</div>
+      <div id="chatStatus" class="note"></div>
     </div>
-    <div class="grid opt">
-      <div><label>Rainfall (mm)</label><input type="number" step="0.1" name="rainfall" value="{% if input_data %}{{input_data.Rainfall}}{% endif %}" placeholder="auto-filled if blank"><div class="hint">Leave blank → regional default</div></div>
-      <div><label>Temperature (°C)</label><input type="number" step="0.1" name="temperature" value="{% if input_data %}{{input_data.Temperature}}{% endif %}" placeholder="auto-filled if blank"></div>
-      <div><label>Humidity (%)</label><input type="number" step="0.1" name="humidity" value="{% if input_data %}{{input_data.Humidity}}{% endif %}" placeholder="auto-filled if blank"></div>
-      <div><label>Soil pH</label><input type="number" step="0.1" name="ph" value="{% if input_data %}{{input_data.pH}}{% endif %}" placeholder="auto-filled if blank"></div>
-      <div><label>Nitrogen (N)</label><input type="number" step="0.1" name="n" value="{% if input_data %}{{input_data.N}}{% endif %}" placeholder="your card value"></div>
-      <div><label>Phosphorus (P)</label><input type="number" step="0.1" name="p" value="{% if input_data %}{{input_data.P}}{% endif %}" placeholder="your card value"></div>
-      <div><label>Potassium (K)</label><input type="number" step="0.1" name="k" value="{% if input_data %}{{input_data.K}}{% endif %}" placeholder="your card value"></div>
-    </div>
+  </section>
 
-    <div class="btns">
-      <button type="submit" class="action btn-predict">🔍 Predict Yield</button>
-      <button type="submit" formaction="/recommend" class="action btn-rec">🌟 Recommend Best 3 Crops</button>
-    </div>
-  </form>
+</main>
 
-  {% if result and result.defaults_used %}
-  <div class="defbox">
-    ℹ️ Auto-filled from regional defaults (you left these blank):
-    {% for k,v in result.defaults_used.items() %}<b>{{ k }}={{ v }}</b>{% if not loop.last %}, {% endif %}{% endfor %}.
-    Override with your Soil Health Card values for a plot-specific prediction.
-  </div>
-  {% endif %}
-
-  {% if error %}
-    <div class="result"><div class="err">⚠️ Error: {{ error }}</div></div>
-  {% endif %}
-
-  {% if result %}
-  <div class="result">
-    <h2>🌾 Prediction Result</h2>
-    <p><span class="big">{{ result.predicted_yield }}</span><span class="unit">t/ha</span></p>
-    <div class="meta-row">
-      <span>Suitability:
-        {% if result.suitable %}<span class="badge ok">Suitable ✓</span>
-        {% else %}<span class="badge no">Not Ideal ✗</span>{% endif %}</span>
-      <span>Confidence: <b>{{ (result.confidence*100)|round(1) }}%</b></span>
-    </div>
-    {% if result.suggestions %}
-    <div class="sugg">
-      <h3>💡 Suggestions to Improve Yield</h3>
-      <ul class="clean">{% for s in result.suggestions %}<li>{{ s }}</li>{% endfor %}</ul>
-    </div>
-    {% endif %}
-  </div>
-  {% endif %}
-
-  {% if recommendations %}
-  <div class="result">
-    <h2>🌟 Top 3 Recommended Crops for Your Soil</h2>
-    <p style="color:var(--muted);margin-top:0;">Ranked by predicted yield for your soil &amp; conditions:</p>
-    {% for r in recommendations %}
-    <div class="rank">
-      <span class="name"><span class="medal">{% if loop.index==1 %}🥇{% elif loop.index==2 %}🥈{% else %}🥉{% endif %}</span>{{ r.crop }}</span>
-      <span><span class="yield">{{ r.predicted_yield }} t/ha</span>
-        {% if r.suitable %}<span class="badge ok">Suitable ✓</span>{% else %}<span class="badge no">Check soil</span>{% endif %}</span>
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
-
-  <hr>
-  <p class="note">
-    * Crop &amp; Soil Type are required. Other fields auto-fill from regional/typical values (proxy for IMD, Soil Health Card, NBSS&amp;LUP open data); override them with your own soil-test numbers for higher accuracy.
-    GPS "Use my location" detects your state from phone coordinates and auto-fills that state's rainfall.
-    Predictions are a decision aid based on regional data, not a farm-level measurement.
-  </p>
-  <p class="footer-cta">🌿 Built as a free, farmer-friendly decision aid · Model: {{ model_name }}</p>
-</div>
+<footer>
+  Smart Farming · AI Crop Yield Intelligence — prototype for academic submission.
+</footer>
 
 <script>
 function useLocation(){
-  var s = document.getElementById('geoStatus');
-  if(!navigator.geolocation){ s.textContent='GPS not supported on this device.'; return; }
-  s.textContent='Detecting location...';
+  var s=document.getElementById('geoStatus');
+  if(!navigator.geolocation){s.textContent='GPS not supported on this device.';s.className='status err';return;}
+  s.textContent='Detecting location…';s.className='status';
   navigator.geolocation.getCurrentPosition(function(pos){
-    var lat=pos.coords.latitude, lon=pos.coords.longitude;
     fetch('/api/geo',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({lat:lat,lon:lon})})
+      body:JSON.stringify({lat:pos.coords.latitude,lon:pos.coords.longitude})})
     .then(r=>r.json()).then(d=>{
-      if(d.status==='ok'){
-        s.textContent='Detected: '+d.state_name+' (rainfall ≈ '+d.rainfall_default+' mm)';
-        var rf=document.querySelector('input[name=rainfall]');
-        if(rf && !rf.value){ rf.value=d.rainfall_default; }
-        var st=document.querySelector('select[name=state]');
-        if(st && d.state_code){ st.value=d.state_code; }
-      } else { s.textContent='Lookup failed: '+d.message; }
-    }).catch(e=>{ s.textContent='Lookup error: '+e; });
-  }, function(err){
-    s.textContent='Location denied/unavailable ('+err.message+'). Select your state manually.';
+      if(d.error){s.textContent='GPS error: '+d.error;s.className='status err';return;}
+      document.getElementById('rainfall').value=d.rainfall;
+      var sd=document.getElementById('state');
+      for(var i=0;i<sd.options.length;i++){ if(sd.options[i].value===d.state){sd.selectedIndex=i;break;} }
+      s.textContent='📍 '+d.message;
+    }).catch(e=>{s.textContent='GPS lookup failed.';s.className='status err';});
+  },function(){s.textContent='Location permission denied.';s.className='status err';});
+}
+function statePicked(){
+  var st=document.getElementById('state').value;
+  if(!st) return;
+  fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:st})})
+  .then(r=>r.json()).then(d=>{
+    if(d.rainfall){document.getElementById('rainfall').value=d.rainfall;
+      document.getElementById('geoStatus').textContent='🏛️ '+d.message;document.getElementById('geoStatus').className='status';}
   });
 }
-function statePicked(code){
-  if(!code) return;
-  fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({state:code})})
-  .then(r=>r.json()).then(d=>{
-    if(d.status==='ok'){
-      var rf=document.querySelector('input[name=rainfall]');
-      if(rf && !rf.value){ rf.value=d.rainfall_default; }
-      var s=document.getElementById('geoStatus');
-      if(s) s.textContent='State: '+d.state_code+' (rainfall ≈ '+d.rainfall_default+' mm)';
-    }
+function predict(){
+  var crop=document.getElementById('crop').value;
+  var soil=document.getElementById('soil').value;
+  if(!crop||!soil){alert('Crop and Soil Type are required.');return;}
+  var f=new FormData();
+  f.append('crop',crop); f.append('soil',soil);
+  ['rainfall','temperature','humidity','soil_ph','n','p','k'].forEach(function(id){
+    var v=document.getElementById(id).value; if(v) f.append(id,v);
+  });
+  fetch('/api/predict',{method:'POST',body:f}).then(r=>r.json()).then(d=>{
+    var o=document.getElementById('predOut');
+    if(d.error){o.classList.add('show');document.getElementById('rYield').textContent='Error';return;}
+    o.classList.add('show');
+    document.getElementById('rYield').textContent=d.predicted_yield_tons_per_ha+' t/ha';
+    document.getElementById('rCrop').textContent=d.crop+' · '+d.soil+' soil';
+    var ui=d.used_inputs;
+    var cells=[['Crop',ui.Crop],['Soil',ui.Soil_Type],['Rainfall',ui.Rainfall+' mm'],
+      ['Temp',ui.Temperature+'°C'],['Humidity',ui.Humidity+'%'],['pH',ui.Soil_pH],
+      ['N',ui.N],['P',ui.P],['K',ui.K]];
+    document.getElementById('rInputs').innerHTML=cells.map(c=>'<div class="cell"><b>'+c[0]+'</b><span>'+c[1]+'</span></div>').join('');
+    var entries=Object.entries(d.feature_importance).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    var max=entries[0][1]||1;
+    document.getElementById('rBars').innerHTML=entries.map(e=>{
+      var pct=Math.max(4,(e[1]/max*100)).toFixed(0);
+      return '<div class="b"><div class="nm">'+e[0]+'</div><div class="track"><div class="fill" style="width:'+pct+'%"></div></div><div class="val">'+e[1].toFixed(2)+'</div></div>';
+    }).join('');
+  });
+}
+function recommend(){
+  var soil=document.getElementById('soil').value;
+  if(!soil){alert('Select a Soil Type first (in the Yield Prediction form).');return;}
+  var f=new FormData(); f.append('soil',soil);
+  ['rainfall','temperature','humidity','soil_ph','n','p','k'].forEach(function(id){
+    var v=document.getElementById(id).value; if(v) f.append(id,v);
+  });
+  fetch('/api/recommend',{method:'POST',body:f}).then(r=>r.json()).then(d=>{
+    var o=document.getElementById('recOut');
+    if(d.error){o.style.display='block';o.innerHTML='<div class="item"><div class="meta"><b>Error</b></div></div>';return;}
+    o.style.display='block';
+    o.innerHTML=d.top3.map((x,i)=>'<div class="item"><div class="rank">'+(i+1)+'</div>'+
+      '<div class="meta"><b>'+x.crop.charAt(0).toUpperCase()+x.crop.slice(1)+'</b><small>predicted for your inputs</small></div>'+
+      '<div class="yield">'+x.predicted_yield+' t/ha<small>predicted yield</small></div></div>').join('');
   });
 }
 
-function lookupSHC(rawId){
-  var s = document.getElementById('shcStatus');
-  var id = (rawId || '').trim();
-  if(!id){ s.textContent=''; return; }
-  s.textContent='Looking up card...';
-  fetch('/api/shc',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({shc_id:id})})
-  .then(r=>r.json()).then(d=>{
-    if(d.found){
-      // auto-fill the soil-test fields only if the user hasn't typed their own
-      var map = {ph:'ph', n:'n', p:'p', k:'k'};
-      for(var key in map){
-        var el = document.querySelector('input[name='+map[key]+']');
-        if(el && !el.value){ el.value = d[key]; }
-      }
-      s.innerHTML = '✅ Card loaded: ' + (d.farmer||'') + (d.village? ' · ' + d.village : '') + ' (pH ' + d.ph + ', N ' + d.n + ', P ' + d.p + ', K ' + d.k + ')';
-      s.style.color = '#166534';
-      // also set state if the card carries one and the user hasn't picked
-      var st = document.querySelector('select[name=state]');
-      if(st && d.state && !st.value){ st.value = d.state; }
-    } else {
-      s.textContent = '⚠️ Card not found in local registry. Type values manually or leave blank for regional defaults.';
-      s.style.color = '#991B1B';
-    }
-  }).catch(e=>{ s.textContent='Lookup error: '+e; s.style.color='#991B1B'; });
+function quickAsk(q){
+  document.getElementById('chatInput').value=q;
+  askAI();
 }
 
+/* ---- Voice input (MediaRecorder -> Groq Whisper) ---- */
+let mediaRecorder=null, audioChunks=[];
+async function toggleMic(){
+  var btn=document.getElementById('micBtn');
+  if(mediaRecorder && mediaRecorder.state==='recording'){
+    mediaRecorder.stop(); btn.classList.remove('recording'); return;
+  }
+  try{
+    var stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    mediaRecorder=new MediaRecorder(stream);
+    audioChunks=[];
+    mediaRecorder.ondataavailable=e=>audioChunks.push(e.data);
+    mediaRecorder.onstop=async ()=>{
+      var blob=new Blob(audioChunks,{type:mediaRecorder.mimeType||'audio/webm'});
+      var st=document.getElementById('chatStatus'); st.textContent='Transcribing…';
+      var fd=new FormData(); fd.append('audio',blob,'audio.webm');
+      fetch('/api/chat/transcribe',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{
+        if(d.status==='ok' && d.text){ document.getElementById('chatInput').value=d.text; st.textContent=''; askAI(); }
+        else { st.textContent='⚠ Could not hear. Type your question instead.'; }
+        stream.getTracks().forEach(t=>t.stop());
+      }).catch(e=>{ st.textContent='⚠ '+e; stream.getTracks().forEach(t=>t.stop()); });
+    };
+    mediaRecorder.start(); btn.classList.add('recording');
+    document.getElementById('chatStatus').textContent='🎤 Listening… tap 🎤 again to stop.';
+  }catch(e){ document.getElementById('chatStatus').textContent='⚠ Microphone blocked. Allow mic access.'; }
+}
+
+/* ---- Voice output (gTTS mp3) ---- */
+function playAudio(b64){
+  if(!b64) return;
+  var audio=new Audio('data:audio/mp3;base64,'+b64);
+  audio.play();
+}
+
+function appendMsg(who, text){
+  var log=document.getElementById('chatLog');
+  var d=document.createElement('div');
+  d.style.margin='8px 0';
+  d.innerHTML='<b style="color:'+(who==='You'?'#15803d':'#0f172a')+'">'+(who==='You'?'🧑 You':'🤖 AgriAI')+':</b> '+
+    '<span style="white-space:pre-wrap">'+text.replace(/</g,'&lt;')+'</span>';
+  log.appendChild(d); log.scrollTop=log.scrollHeight;
+}
+function askAI(){
+  var inp=document.getElementById('chatInput');
+  var q=inp.value.trim(); if(!q) return;
+  appendMsg('You', q); inp.value='';
+  var st=document.getElementById('chatStatus'); st.textContent='Thinking…';
+  fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({message:q})}).then(r=>r.json()).then(d=>{
+    appendMsg('AI', d.reply || '(no response)');
+    if(d.status==='no_key'){ st.textContent='⚠ AI not configured: add GROQ_API_KEY to .env to enable chat.'; }
+    else if(d.status==='error'){ st.textContent='⚠ '+d.reply; }
+    else { st.textContent=''; playAudio(d.audio); }
+  }).catch(e=>{ appendMsg('AI','⚠ Network error: '+e); st.textContent=''; });
+}
+function clearChat(){
+  fetch('/api/chat/clear',{method:'POST'});
+  document.getElementById('chatLog').innerHTML='';
+  document.getElementById('chatStatus').textContent='';
+}
 </script>
 </body>
 </html>
