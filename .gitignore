@@ -1,7 +1,6 @@
 # Python
 __pycache__/
 *.py[cod]
-*.pkl
 venv/
 .venv/
 .env
@@ -14,8 +13,6 @@ node_modules/
 Thumbs.db
 *.swp
 
-# Large model/data artifacts we regenerate via the scripts
-# (keep model/ and realdata/ out of git to keep the repo light)
-model/
-realdata/
-data/
+# Reference papers
+reference_papers/
+
