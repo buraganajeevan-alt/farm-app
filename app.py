@@ -87,8 +87,10 @@ def api_chat():
     if not msg:
         return jsonify({"error": "Empty message."}), 400
     history = session.get("chat_history", [])
-    reply, status, audio = agri_chat(msg, history=history)
-    if status == "ok":
+    farm_context = body.get("farm_context") or session.get("last_farm_context") or {}
+    lang = body.get("lang") or "te"
+    reply, status, audio = agri_chat(msg, history=history, speak_lang=lang, farm_context=farm_context)
+    if status in ["ok", "ok_fallback"]:
         history.append({"user": msg, "ai": reply})
         session["chat_history"] = history[-8:]
     return jsonify({"reply": reply, "status": status,
@@ -105,7 +107,8 @@ def api_transcribe():
         return jsonify({"error": "No audio file."}), 400
     f = request.files["audio"]
     data = f.read()
-    text, status = agri_transcribe(data, f.filename or "audio.webm")
+    lang = request.form.get("lang") or None
+    text, status = agri_transcribe(data, f.filename or "audio.webm", lang=lang)
     return jsonify({"text": text, "status": status})
 
 @app.route("/api/chat/speak", methods=["POST"])
@@ -125,6 +128,16 @@ def api_diagnose():
     data = f.read()
     result, status = agri_diagnose(data, f.filename or "image.jpg")
     return jsonify({"result": result, "status": status})
+
+@app.route("/api/rag/search", methods=["POST"])
+def api_rag_search():
+    body = request.get_json(force=True, silent=True) or {}
+    q = (body.get("query") or "").strip()
+    if not q:
+        return jsonify({"error": "Empty query."}), 400
+    import agri_rag
+    results, context = agri_rag.retrieve(q, top_k=int(body.get("top_k", 3)))
+    return jsonify({"results": results, "context": context, "count": len(results)})
 
 if __name__ == "__main__":
     app.run(debug=False, host="127.0.0.1", port=5000)

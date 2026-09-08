@@ -255,7 +255,7 @@
       <div class="widget-title">
         <div class="widget-avatar">🌾</div>
         <div>
-          <h3>AgriAI Assistant</h3>
+          <h3>AgriAI Assistant <span style="background:rgba(34,197,94,0.15);color:#15803d;font-size:0.68rem;padding:2px 6px;border-radius:4px;margin-left:6px;font-weight:600">📚 RAG Engine</span></h3>
           <p><span class="live-dot"></span> Senior Agronomist · Voice &amp; Vision</p>
         </div>
       </div>
@@ -716,45 +716,207 @@ function uploadImage(input){
   });
 }
 
-/* ---- Voice input (MediaRecorder -> Groq Whisper) ---- */
-let mediaRecorder=null, audioChunks=[];
-async function toggleMic(){
-  var btn=document.getElementById('micBtn');
-  var st=document.getElementById('chatStatus');
-  if(mediaRecorder && mediaRecorder.state==='recording'){
-    mediaRecorder.stop(); btn.classList.remove('recording'); return;
+/* ---- Real-Time Gemini / ChatGPT Style Voice Engine ---- */
+let recognition = null, isListening = false, silenceTimer = null;
+let currentAudioElement = null, isSpeakingAI = false;
+let mediaRecorder = null, audioChunks = [];
+
+function stopAISpeech() {
+  if (currentAudioElement) {
+    try { currentAudioElement.pause(); currentAudioElement.currentTime = 0; } catch(e){}
+    currentAudioElement = null;
   }
-  try{
-    var stream=await navigator.mediaDevices.getUserMedia({audio:true});
-    mediaRecorder=new MediaRecorder(stream);
-    audioChunks=[];
-    mediaRecorder.ondataavailable=e=>audioChunks.push(e.data);
-    mediaRecorder.onstop=async ()=>{
-      st.textContent='Transcribing voice query…';
-      var blob=new Blob(audioChunks,{type:mediaRecorder.mimeType||'audio/webm'});
-      var fd=new FormData(); fd.append('audio',blob,'audio.webm');
-      fetch('/api/chat/transcribe',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{
-        if(d.status==='ok' && d.text){
-          document.getElementById('chatInput').value=d.text;
-          st.textContent='';
-          askAI();
-        } else {
-          st.textContent='⚠ Voice not recognized. Try typing.';
-        }
-        stream.getTracks().forEach(t=>t.stop());
-      }).catch(e=>{ st.textContent='⚠ Speech recognition error: '+e; stream.getTracks().forEach(t=>t.stop()); });
-    };
-    mediaRecorder.start(); btn.classList.add('recording');
-    st.textContent='🎤 Listening... Tap 🎤 to stop & send.';
-  }catch(e){ st.textContent='⚠ Microphone access denied.'; }
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
+  isSpeakingAI = false;
 }
 
-function playAudio(b64){
-  if(!b64 || audioMuted) return;
+function toggleAudioMute() {
+  audioMuted = !audioMuted;
+  var btn = document.getElementById('muteBtn');
+  if (btn) btn.textContent = audioMuted ? '🔇' : '🔊';
+  if (audioMuted) stopAISpeech();
+}
+
+function initSpeechRecognition() {
+  var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec) return null;
+  
+  var rec = new SpeechRec();
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.maxAlternatives = 1;
+
+  rec.onstart = function() {
+    isListening = true;
+    stopAISpeech(); // Barge-in: Stop AI talking as soon as user starts speaking
+    var btn = document.getElementById('micBtn');
+    var st = document.getElementById('chatStatus');
+    if (btn) btn.classList.add('recording');
+    if (st) st.innerHTML = '<span style="color:#ef4444;font-weight:bold">🔴 Listening...</span> Speak now (auto-sends on pause)';
+  };
+
+  rec.onresult = function(event) {
+    stopAISpeech();
+    var inp = document.getElementById('chatInput');
+    var finalTranscript = '', interimTranscript = '';
+
+    for (var i = event.resultIndex; i < event.results.length; ++i) {
+      if (event.results[i].isFinal) {
+        finalTranscript += event.results[i][0].transcript;
+      } else {
+        interimTranscript += event.results[i][0].transcript;
+      }
+    }
+
+    var liveText = finalTranscript || interimTranscript;
+    if (liveText && inp) {
+      inp.value = liveText;
+    }
+
+    // Reset Voice Activity Detection (VAD) Auto-Silence Timer (1.2 seconds)
+    clearTimeout(silenceTimer);
+    silenceTimer = setTimeout(function() {
+      if (isListening && inp.value.trim().length > 0) {
+        stopMic();
+        askAI();
+      }
+    }, 1200);
+  };
+
+  rec.onerror = function(event) {
+    if (event.error !== 'no-speech') {
+      stopMic();
+    }
+  };
+
+  rec.onend = function() {
+    isListening = false;
+    var btn = document.getElementById('micBtn');
+    if (btn) btn.classList.remove('recording');
+  };
+
+  return rec;
+}
+
+function stopMic() {
+  clearTimeout(silenceTimer);
+  if (recognition) {
+    try { recognition.stop(); } catch(e){}
+  }
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    try { mediaRecorder.stop(); } catch(e){}
+  }
+  isListening = false;
+  var btn = document.getElementById('micBtn');
+  var st = document.getElementById('chatStatus');
+  if (btn) btn.classList.remove('recording');
+  if (st && st.textContent.includes('Listening')) st.textContent = '';
+}
+
+async function toggleMic() {
+  stopAISpeech(); // Interrupt AI speech immediately
+  var btn = document.getElementById('micBtn');
+  var st = document.getElementById('chatStatus');
+
+  if (isListening) {
+    stopMic();
+    if (document.getElementById('chatInput').value.trim()) {
+      askAI();
+    }
+    return;
+  }
+
+  // Attempt 1: Web Speech Recognition (Real-Time Live Partial Transcription)
+  if (!recognition) {
+    recognition = initSpeechRecognition();
+  }
+
+  if (recognition) {
+    try {
+      recognition.start();
+      return;
+    } catch(e) {
+      console.warn('WebSpeech start failed, falling back to MediaRecorder:', e);
+    }
+  }
+
+  // Attempt 2: MediaRecorder + Groq Whisper Backup
   try {
-    var audio=new Audio('data:audio/mp3;base64,'+b64);
-    audio.play();
-  } catch(e){}
+    var stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    mediaRecorder.onstop = async () => {
+      st.textContent = '⚡ Transcribing with Groq Whisper…';
+      var blob = new Blob(audioChunks, {type: mediaRecorder.mimeType || 'audio/webm'});
+      var fd = new FormData(); fd.append('audio', blob, 'audio.webm');
+      fetch('/api/chat/transcribe', {method:'POST', body:fd}).then(r => r.json()).then(d => {
+        if (d.status === 'ok' && d.text) {
+          document.getElementById('chatInput').value = d.text;
+          st.textContent = '';
+          askAI();
+        } else {
+          st.textContent = '⚠ Voice not recognized. Try typing.';
+        }
+        stream.getTracks().forEach(t => t.stop());
+      }).catch(e => {
+        st.textContent = '⚠ Speech recognition error: ' + e;
+        stream.getTracks().forEach(t => t.stop());
+      });
+    };
+    mediaRecorder.start();
+    isListening = true;
+    btn.classList.add('recording');
+    st.textContent = '🎤 Listening (Whisper mode)... Tap 🎤 to send.';
+  } catch(e) {
+    st.textContent = '⚠ Microphone access denied.';
+  }
+}
+
+/* ---- High-Quality Natural Voice Speech Synthesizer ---- */
+function playAudio(b64, textToSpeak) {
+  if (audioMuted) return;
+  stopAISpeech(); // Cancel any existing speech
+
+  var text = (textToSpeak || '').replace(/[*#_`]/g, '').trim();
+
+  // Primary: Browser Natural Neural Speech Synthesis
+  if ('speechSynthesis' in window && text.length > 0) {
+    try {
+      window.speechSynthesis.cancel();
+      var utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+
+      // Select best voice matching language
+      var voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        var preferredVoice = voices.find(v => v.lang.startsWith('te') || v.lang.startsWith('hi') || v.name.includes('Natural') || v.name.includes('Google'));
+        if (preferredVoice) utterance.voice = preferredVoice;
+      }
+
+      utterance.onstart = function() { isSpeakingAI = true; };
+      utterance.onend = function() { isSpeakingAI = false; };
+      utterance.onerror = function() { isSpeakingAI = false; };
+
+      window.speechSynthesis.speak(utterance);
+      return;
+    } catch(e) {
+      console.warn('SpeechSynthesis failed, falling back to audio payload:', e);
+    }
+  }
+
+  // Fallback: MP3 Audio Payload Playback
+  if (b64) {
+    try {
+      currentAudioElement = new Audio('data:audio/mp3;base64,' + b64);
+      currentAudioElement.onplay = function() { isSpeakingAI = true; };
+      currentAudioElement.onended = function() { isSpeakingAI = false; currentAudioElement = null; };
+      currentAudioElement.play();
+    } catch(e) {}
+  }
 }
 
 function appendMsg(who, text){
@@ -772,18 +934,37 @@ function appendMsg(who, text){
   log.scrollTop=log.scrollHeight;
 }
 
+function getFarmContext(){
+  var ctx = {};
+  var getVal = function(id){ var el = document.getElementById(id); return el ? el.value : ''; };
+  ctx.state = getVal('state');
+  ctx.soil = getVal('soil');
+  ctx.crop = getVal('crop');
+  ctx.n = getVal('n');
+  ctx.p = getVal('p');
+  ctx.k = getVal('k');
+  ctx.rainfall = getVal('rainfall');
+  ctx.temperature = getVal('temperature');
+  ctx.humidity = getVal('humidity');
+  ctx.soil_ph = getVal('soil_ph');
+  return ctx;
+}
+
 function askAI(){
   var inp=document.getElementById('chatInput');
   var q=inp.value.trim(); if(!q) return;
   appendMsg('You', q); inp.value='';
   var st=document.getElementById('chatStatus'); st.textContent='AgriAI is thinking…';
   
-  fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({message:q})}).then(r=>r.json()).then(d=>{
+  fetch('/api/chat',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({message:q, farm_context: getFarmContext()})
+  }).then(r=>r.json()).then(d=>{
     appendMsg('AI', d.reply || '(no response)');
     if(d.status==='no_key'){ st.textContent='⚠ Add GROQ_API_KEY to .env to enable AI chat.'; }
     else if(d.status==='error'){ st.textContent='⚠ '+d.reply; }
-    else { st.textContent=''; playAudio(d.audio); }
+    else { st.textContent=''; playAudio(d.audio, d.reply); }
   }).catch(e=>{ appendMsg('AI','⚠ Network error: '+e); st.textContent=''; });
 }
 

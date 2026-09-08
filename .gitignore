@@ -17,3 +17,6 @@ Thumbs.db
 reference_papers/
 *.docx
 
+# Dynamic RAG web cache
+data/knowledge/web_cache/*.md
+
