@@ -1265,6 +1265,22 @@
           </div>
         </div>
 
+        <div class="row2">
+          <div class="field">
+            <label>Crop Season <span class="hint">(auto-selected from calendar)</span></label>
+            <select id="season">
+              {% for sn in seasons %}<option value="{{sn}}">{{sn}}</option>{% endfor %}
+            </select>
+            <div class="autofill-hint">📅 Kharif (Monsoon), Rabi (Winter), Summer, or Whole Year</div>
+          </div>
+          <div class="field">
+            <label>Farm Cultivation Area (Hectares) <span class="hint">(optional)</span></label>
+            <input id="area" type="number" step="any" min="0.1" value="1.0" placeholder="1.0">
+            <div class="autofill-hint">📐 Standard unit: 1.0 ha (used for total production scale)</div>
+          </div>
+        </div>
+        <input type="hidden" id="district" value="">
+
         <div class="row3">
           <div class="field">
             <label>Temperature (°C)</label>
@@ -1862,6 +1878,10 @@ function useLocation(){
     .then(d => {
       if(d.error){ s.innerHTML = '<span style="color:#dc2626;">GPS error: ' + d.error + '</span>'; return; }
       if(d.rainfall) document.getElementById('rainfall').value = d.rainfall;
+      if(d.district){
+        var di = document.getElementById('district');
+        if(di) di.value = d.district;
+      }
       var sd = document.getElementById('state');
       if(sd && d.state){
         for(var i = 0; i < sd.options.length; i++){
@@ -1931,6 +1951,10 @@ function selectPlace(lat, lon, name, state){
     body: JSON.stringify({lat: lat, lon: lon})
   }).then(r => r.json()).then(d => {
     if(d.rainfall) document.getElementById('rainfall').value = d.rainfall;
+    if(d.district){
+      var di = document.getElementById('district');
+      if(di) di.value = d.district;
+    }
     var sd = document.getElementById('state');
     var targetState = state || d.state;
     if(sd && targetState){
@@ -1972,9 +1996,9 @@ function predict(){
   var f = new FormData();
   f.append('crop', crop);
   f.append('soil', soil);
-  ['rainfall','temperature','humidity','soil_ph','n','p','k'].forEach(function(id){
-    var v = document.getElementById(id).value;
-    if(v) f.append(id, v);
+  ['rainfall','temperature','humidity','soil_ph','n','p','k','season','area','district','state'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el && el.value) f.append(id, el.value);
   });
   fetch('/api/predict', {method:'POST', body:f}).then(r => r.json()).then(d => {
     var o = document.getElementById('predOut');
@@ -1988,9 +2012,11 @@ function predict(){
     document.getElementById('rCrop').textContent = (d.crop || crop || '').toUpperCase() + ' · ' + (d.soil || soil || '').toUpperCase() + ' SOIL';
     var ui = d.used_inputs;
     var cells = [
-      ['Crop', ui.Crop], ['Soil', ui.Soil_Type], ['Rainfall', ui.Rainfall + ' mm'],
-      ['Temp', ui.Temperature + '°C'], ['Humidity', ui.Humidity + '%'], ['pH', ui.Soil_pH],
-      ['N', ui.N + ' kg/ha'], ['P', ui.P + ' kg/ha'], ['K', ui.K + ' kg/ha']
+      ['Crop', ui.Crop], ['Soil', ui.Soil_Type], ['Season', ui.Season || 'Auto'],
+      ['Rainfall', ui.Rainfall + ' mm'], ['Temp', ui.Temperature + '°C'], ['Humidity', ui.Humidity + '%'],
+      ['pH', ui.Soil_pH], ['N', ui.N + ' kg/ha'], ['P', ui.P + ' kg/ha'], ['K', ui.K + ' kg/ha'],
+      ['Cult. Area', (ui.Area || 1.0) + ' ha'],
+      ['District Yield', (ui.District_Mean_Yield ? Number(ui.District_Mean_Yield).toFixed(2) + ' t/ha' : 'Regional')]
     ];
     document.getElementById('rInputs').innerHTML = cells.map(c => '<div class="kv-cell"><b>' + c[0] + '</b><span>' + c[1] + '</span></div>').join('');
     var entries = Object.entries(d.feature_importance).sort((a,b) => b[1] - a[1]).slice(0, 5);
@@ -2011,9 +2037,9 @@ function recommend(){
   }
   var f = new FormData();
   f.append('soil', soil);
-  ['rainfall','temperature','humidity','soil_ph','n','p','k'].forEach(function(id){
-    var v = document.getElementById(id).value;
-    if(v) f.append(id, v);
+  ['rainfall','temperature','humidity','soil_ph','n','p','k','season','area','district','state'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el && el.value) f.append(id, el.value);
   });
   fetch('/api/recommend', {method:'POST', body:f}).then(r => r.json()).then(d => {
     var o = document.getElementById('recOut');
@@ -2248,7 +2274,24 @@ function clearChat(){
   document.getElementById('chatStatus').textContent = '';
 }
 
+function initSeasonDetection(){
+  var s = document.getElementById('season');
+  if(!s) return;
+  var m = new Date().getMonth() + 1; // 1-12
+  var target = 'Whole year';
+  if (m >= 6 && m <= 10) target = 'Kharif';
+  else if (m >= 11 || m <= 2) target = 'Rabi';
+  else if (m >= 3 && m <= 5) target = 'Summer';
+  for(var i = 0; i < s.options.length; i++){
+    if(s.options[i].value.toLowerCase() === target.toLowerCase()){
+      s.selectedIndex = i;
+      break;
+    }
+  }
+}
+
 window.addEventListener('DOMContentLoaded', function(){
+  initSeasonDetection();
   load3DayWeather();
   updateFertilityMatrix();
 });

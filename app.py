@@ -22,14 +22,15 @@ predictor = Predictor()
 CROPS = predictor.meta["crops"]
 SOILS = predictor.meta["soils"]
 STATES = sorted(STATE_WEATHER.keys())
+SEASONS = predictor.meta.get("seasons", ["Kharif", "Rabi", "Summer", "Whole year"])
 
-def _f(v):
+def _f(v, default=None):
     try: return float(v)
-    except: return None
+    except: return default
 
 @app.route("/")
 def home():
-    return render_template("index.html", crops=CROPS, soils=SOILS, states=STATES,
+    return render_template("index.html", crops=CROPS, soils=SOILS, states=STATES, seasons=SEASONS,
                            best=predictor.meta["best_model"],
                            metrics=predictor.meta["metrics"])
 
@@ -77,7 +78,11 @@ def api_predict():
                             temperature=_f(f.get("temperature")),
                             humidity=_f(f.get("humidity")),
                             soil_ph=_f(f.get("soil_ph")),
-                            n=_f(f.get("n")), p=_f(f.get("p")), k=_f(f.get("k")))
+                            n=_f(f.get("n")), p=_f(f.get("p")), k=_f(f.get("k")),
+                            state=f.get("state"),
+                            district=f.get("district"),
+                            season=f.get("season"),
+                            area=_f(f.get("area"), 1.0))
     return jsonify(res)
 
 @app.route("/api/recommend", methods=["POST"])
@@ -89,7 +94,9 @@ def api_recommend():
     return jsonify({"soil": soil, "top3": predictor.recommend_crops(
         soil, rainfall=_f(f.get("rainfall")), temperature=_f(f.get("temperature")),
         humidity=_f(f.get("humidity")), soil_ph=_f(f.get("soil_ph")),
-        n=_f(f.get("n")), p=_f(f.get("p")), k=_f(f.get("k")))})
+        n=_f(f.get("n")), p=_f(f.get("p")), k=_f(f.get("k")),
+        state=f.get("state"), district=f.get("district"),
+        season=f.get("season"), area=_f(f.get("area"), 1.0))})
 
 @app.route("/api/chat", methods=["POST"])
 def api_chat():
