@@ -1131,6 +1131,19 @@
     font-size: 0.78rem;
     text-align: center;
   }
+
+  .place-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.15s;
+  }
+  .place-item:hover {
+    background: #f0fdf4;
+  }
 </style>
 </head>
 <body>
@@ -1262,7 +1275,7 @@
           </div>
           <div class="field">
             <label>Soil pH</label>
-            <input id="soil_ph" type="number" step="any" placeholder="auto" oninput="syncFromNumber('soil_ph', 'rangePH'); updateFertilityMatrix();">
+            <input id="soil_ph" type="number" step="any" placeholder="auto" oninput="updateFertilityMatrix();">
           </div>
         </div>
 
@@ -1553,6 +1566,7 @@
 </footer>
 
 <script>
+
 let audioMuted = false;
 let current3DayWeatherSummary = '';
 let cachedForecastDays = [];
@@ -1873,11 +1887,9 @@ function searchCityLocation(){
       return;
     }
     resDiv.innerHTML = places.map(function(p){
-      var escName = (p.name || '').replace(/'/g, "\'");
-      var escState = (p.state || '').replace(/'/g, "\'");
-      return '<div style="padding:7px 10px; cursor:pointer; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;" ' +
-             'onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'" ' +
-             'onclick="selectPlace(' + p.lat + ',' + p.lon + ','' + escName + '','' + escState + '')">' +
+      var nameJson = JSON.stringify(p.name || '');
+      var stateJson = JSON.stringify(p.state || '');
+      return '<div class="place-item" onclick=\'selectPlace(' + p.lat + ',' + p.lon + ',' + nameJson + ',' + stateJson + ')\'>' +
              '<span><b>' + p.display + '</b></span>' +
              '<span style="color:var(--muted); font-size:.7rem;">' + p.lat.toFixed(2) + ', ' + p.lon.toFixed(2) + '</span>' +
              '</div>';
@@ -2154,8 +2166,7 @@ function appendMsg(who, text){
   
   var now = new Date();
   var timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-  var formattedText = text.replace(/</g,'&lt;').replace(/
-/g, '<br>');
+  var formattedText = text.replace(/</g,'&lt;').replace(/\n/g, '<br>');
   div.innerHTML = formattedText + '<div class="msg-meta">' + (who === 'You' ? 'You' : 'AgriAI') + ' · ' + timeStr + '</div>';
   
   log.appendChild(div);
@@ -2223,6 +2234,7 @@ window.addEventListener('DOMContentLoaded', function(){
   load3DayWeather();
   updateFertilityMatrix();
 });
+
 </script>
 </body>
 </html>
