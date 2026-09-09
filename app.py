@@ -15,6 +15,8 @@ from agri_chat import chat as agri_chat, is_available as chat_available, transcr
 
 app = Flask(__name__)
 app.secret_key = "smart-farming-dev-key"
+app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
 predictor = Predictor()
 
 CROPS = predictor.meta["crops"]

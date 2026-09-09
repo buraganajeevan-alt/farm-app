@@ -892,6 +892,7 @@
                 transform var(--duration-normal) var(--ease-spring);
   }
   #agriChatWidget.chat-widget-hidden {
+    display: none !important;
     opacity: 0;
     transform: translateY(24px) scale(0.94);
     pointer-events: none;
@@ -1166,8 +1167,8 @@
 
 <!-- Interactive View Switcher Tabs -->
 <div class="tab-nav">
-  <button class="tab-btn active" onclick="switchView('mlView', this)">📈 ML Yield Prediction</button>
-  <button class="tab-btn" onclick="switchView('simView', this)">🧪 What-If Agronomic Simulator</button>
+  <button type="button" class="tab-btn active" onclick="switchView('mlView', this)">📈 ML Yield Prediction</button>
+  <button type="button" class="tab-btn" onclick="switchView('simView', this)">🧪 What-If Agronomic Simulator</button>
 </div>
 
 <main>
@@ -1328,7 +1329,7 @@
           </div>
         </div>
 
-        <button class="btn-submit" onclick="predict()">
+        <button type="button" class="btn-submit" onclick="predict()">
           ⚡ Run Machine Learning Yield Prediction
         </button>
 
@@ -1369,7 +1370,7 @@
           <p style="font-size:0.78rem; color:var(--muted); margin-bottom:14px;">
             Analyzes your soil type, rainfall, temperature, and NPK parameters to rank the top 3 most profitable crops.
           </p>
-          <button class="btn-submit" style="margin-top:0; background:linear-gradient(135deg,#0284c7,#0369a1);" onclick="recommend()">
+          <button type="button" class="btn-submit" style="margin-top:0; background:linear-gradient(135deg,#0284c7,#0369a1);" onclick="recommend()">
             🥇 Recommend Top 3 Crops
           </button>
           <div id="recOut" class="rec-card-list" style="display:none;"></div>
@@ -1412,9 +1413,9 @@
         <p style="font-size:0.78rem; color:var(--muted);">Simulate varying irrigation, fertilizer applications, and rainfall to discover peak agronomic returns.</p>
       </div>
       <div style="display:flex; gap:6px;">
-        <button class="chip" onclick="applyPreset('rice')">Rice Preset</button>
-        <button class="chip" onclick="applyPreset('cotton')">Cotton Preset</button>
-        <button class="chip" onclick="applyPreset('maize')">Maize Preset</button>
+        <button type="button" class="chip" onclick="applyPreset('rice')">Rice Preset</button>
+        <button type="button" class="chip" onclick="applyPreset('cotton')">Cotton Preset</button>
+        <button type="button" class="chip" onclick="applyPreset('maize')">Maize Preset</button>
       </div>
     </div>
 
@@ -1529,11 +1530,11 @@
 
     <!-- Suggested Quick Action Chips -->
     <div class="quick-chips">
-      <button class="chip" onclick="quickAsk('ఈ వాతావరణంలో ఎరువులు వేయవచ్చా?')">🌦️ Spray Today?</button>
-      <button class="chip" onclick="quickAsk('వరి పంటకు ఎరువుల మోతాదు ఎంత?')">💩 Rice NPK</button>
-      <button class="chip" onclick="quickAsk('How to cultivate dragon fruit in India?')">🐉 Dragon Fruit</button>
-      <button class="chip" onclick="quickAsk('మొక్కాకు తెగులు గుర్తింపు మరియు చికిత్స?')">🌿 Leaf Disease</button>
-      <button class="chip" onclick="quickAsk('What are the benefits of PM-KISAN scheme?')">🏛️ PM-KISAN</button>
+      <button type="button" class="chip" onclick="quickAsk('ఈ వాతావరణంలో ఎరువులు వేయవచ్చా?')">🌦️ Spray Today?</button>
+      <button type="button" class="chip" onclick="quickAsk('వరి పంటకు ఎరువుల మోతాదు ఎంత?')">💩 Rice NPK</button>
+      <button type="button" class="chip" onclick="quickAsk('How to cultivate dragon fruit in India?')">🐉 Dragon Fruit</button>
+      <button type="button" class="chip" onclick="quickAsk('మొక్కాకు తెగులు గుర్తింపు మరియు చికిత్స?')">🌿 Leaf Disease</button>
+      <button type="button" class="chip" onclick="quickAsk('What are the benefits of PM-KISAN scheme?')">🏛️ PM-KISAN</button>
     </div>
 
     <!-- Scrollable Chat Body -->
@@ -1556,7 +1557,7 @@
       </label>
       <input id="chatInput" type="text" placeholder="Ask AgriAI / మీ ప్రశ్న టైప్ చేయండి..." onkeydown="if(event.key==='Enter')askAI()">
       <button id="micBtn" class="btn-icon" onclick="toggleMic()" title="Tap to speak (ChatGPT/Gemini Voice Engine)">🎤</button>
-      <button class="btn-send" onclick="askAI()" title="Send Message">➤</button>
+      <button type="button" class="btn-send" onclick="askAI()" title="Send Message">➤</button>
     </div>
   </div>
 </main>
@@ -1566,6 +1567,23 @@
 </footer>
 
 <script>
+
+function showToast(msg, type){
+  var existing = document.getElementById('agriToast');
+  if(existing) existing.remove();
+  var t = document.createElement('div');
+  t.id = 'agriToast';
+  t.style.cssText = 'position:fixed; top:24px; left:50%; transform:translateX(-50%); z-index:999999; padding:12px 24px; border-radius:12px; font-size:0.85rem; font-weight:700; color:#fff; box-shadow:0 10px 25px rgba(0,0,0,0.2); animation:fadeInDown 0.25s ease; pointer-events:auto; display:flex; align-items:center; gap:8px;';
+  if(type === 'error') t.style.background = 'linear-gradient(135deg, #ef4444, #b91c1c)';
+  else if(type === 'warning') t.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+  else t.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+  t.innerHTML = (type === 'error' ? '⚠️ ' : (type === 'warning' ? '🔔 ' : '✅ ')) + msg;
+  document.body.appendChild(t);
+  setTimeout(function(){
+    if(t && t.parentNode) t.parentNode.removeChild(t);
+  }, 3500);
+}
+
 
 let audioMuted = false;
 let current3DayWeatherSummary = '';
@@ -1948,7 +1966,7 @@ function predict(){
   var crop = document.getElementById('crop').value;
   var soil = document.getElementById('soil').value;
   if(!crop || !soil){
-    alert('Crop and Soil Type are required.');
+    showToast('Please select Crop and Soil Type first.', 'warning');
     return;
   }
   var f = new FormData();
@@ -1967,7 +1985,7 @@ function predict(){
     }
     o.classList.add('show');
     document.getElementById('rYield').textContent = d.predicted_yield_tons_per_ha + ' t/ha';
-    document.getElementById('rCrop').textContent = d.crop.toUpperCase() + ' · ' + d.soil.toUpperCase() + ' SOIL';
+    document.getElementById('rCrop').textContent = (d.crop || crop || '').toUpperCase() + ' · ' + (d.soil || soil || '').toUpperCase() + ' SOIL';
     var ui = d.used_inputs;
     var cells = [
       ['Crop', ui.Crop], ['Soil', ui.Soil_Type], ['Rainfall', ui.Rainfall + ' mm'],
@@ -1988,7 +2006,7 @@ function predict(){
 function recommend(){
   var soil = document.getElementById('soil').value;
   if(!soil){
-    alert('Select a Soil Type first (in the Yield Prediction form).');
+    showToast('Please select Soil Type first.', 'warning');
     return;
   }
   var f = new FormData();
@@ -2121,7 +2139,7 @@ function toggleMic(){
     if(recognition){
       try { recognition.start(); } catch(e){}
     } else {
-      alert('Speech Recognition is not supported on this browser. Try Google Chrome or Microsoft Edge.');
+      showToast('Speech Recognition not supported on this browser. Try Chrome or Edge.', 'warning');
     }
   }
 }
