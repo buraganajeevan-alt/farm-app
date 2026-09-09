@@ -148,7 +148,14 @@ def get_local_fallback_reply(query: str, farm_context: dict = None) -> str:
             f"Tip: Upload a leaf photo using the diagnose button once GROQ_API_KEY is configured for automated AI visual diagnosis!"
         )
 
-    if any(kw in q for kw in ["weather", "rain", "monsoon", "irrigation"]):
+    wf = (farm_context.get("weather_forecast") or "") if farm_context else ""
+    if any(kw in q for kw in ["weather", "rain", "forecast", "monsoon", "irrigation", "spray"]):
+        if wf:
+            return (
+                f"🌦️ (Live 3-Day Weather Advisory){ctx_str}\n"
+                f"{wf}\n\n"
+                f"Action Tip: Avoid chemical foliar sprays and Urea top-dressing if rain probability exceeds 40%."
+            )
         return (
             f"ℹ️ (Offline Knowledge Assistant Mode){ctx_str}\n"
             f"Irrigation & Rain Guidance:\n"

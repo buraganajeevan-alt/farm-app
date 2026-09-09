@@ -47,6 +47,15 @@ def api_geo():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
+@app.route("/api/geo/search", methods=["GET"])
+def api_geo_search():
+    q = (request.args.get("q") or "").strip()
+    if not q:
+        return jsonify([])
+    from geo_state import search_location_places
+    places = search_location_places(q)
+    return jsonify(places)
+
 @app.route("/api/state", methods=["POST"])
 def api_state():
     body = request.get_json(force=True, silent=True) or {}
@@ -138,6 +147,22 @@ def api_rag_search():
     import agri_rag
     results, context = agri_rag.retrieve(q, top_k=int(body.get("top_k", 3)))
     return jsonify({"results": results, "context": context, "count": len(results)})
+
+@app.route("/api/weather/3day", methods=["GET", "POST"])
+def api_weather_3day():
+    if request.method == "POST":
+        body = request.get_json(force=True, silent=True) or {}
+        lat = body.get("lat")
+        lon = body.get("lon")
+        state = body.get("state")
+    else:
+        lat = request.args.get("lat")
+        lon = request.args.get("lon")
+        state = request.args.get("state")
+    
+    import weather_service
+    forecast_data = weather_service.get_3day_weather(lat=lat, lon=lon, state_name=state)
+    return jsonify(forecast_data)
 
 if __name__ == "__main__":
     app.run(debug=False, host="127.0.0.1", port=5000)

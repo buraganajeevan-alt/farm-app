@@ -3,250 +3,1490 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AgriYield — AI Crop Yield Intelligence</title>
+<title>AgriYield AI — Precision Farming &amp; Crop Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --green-900:#14532d; --green-700:#15803d; --green-600:#16a34a;
-    --green-50:#f0fdf4; --green-100:#dcfce7; --green-200:#bbf7d0;
-    --ink:#0f172a; --muted:#64748b; --line:#e2e8f0;
-    --card:#ffffff; --bg:#f8fafc; --amber:#b45309; --shadow:0 1px 2px rgba(15,23,42,.04),0 8px 24px rgba(15,23,42,.06);
+  :root {
+    --primary: #059669;
+    --primary-dark: #047857;
+    --primary-deep: #064e3b;
+    --primary-light: #ecfdf5;
+    --primary-border: #a7f3d0;
+    --accent: #f59e0b;
+    --accent-dark: #d97706;
+    --ink: #0f172a;
+    --ink-light: #334155;
+    --muted: #64748b;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --line: #e2e8f0;
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 22px;
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04);
+    --shadow-md: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+    --shadow-lg: 0 20px 30px -5px rgba(15, 23, 42, 0.08), 0 10px 15px -4px rgba(15, 23, 42, 0.04);
+    --shadow-glow: 0 0 25px rgba(5, 150, 105, 0.25);
+
+    /* Motion Tokens (motion-ui) */
+    --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-snappy: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --duration-micro: 120ms;
+    --duration-fast: 180ms;
+    --duration-normal: 280ms;
   }
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0}
-  body{font-family:'Segoe UI',-apple-system,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Accessibility: Prefers reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
   /* Header */
-  header{background:linear-gradient(135deg,var(--green-900),var(--green-700));color:#fff;padding:0;border-bottom:1px solid rgba(255,255,255,.08)}
-  .nav{max-width:1040px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:16px 22px}
-  .brand{display:flex;align-items:center;gap:12px}
-  .logo{width:40px;height:40px;border-radius:11px;background:rgba(255,255,255,.14);display:grid;place-items:center;font-size:22px}
-  .brand h1{font-size:1.18rem;margin:0;font-weight:650;letter-spacing:.2px}
-  .brand p{margin:0;font-size:.78rem;opacity:.8}
-  .nav .pill{margin-left:auto;background:rgba(255,255,255,.14);padding:6px 13px;border-radius:999px;font-size:.76rem;font-weight:600}
-  /* Layout */
-  main{max-width:1040px;margin:26px auto;padding:0 22px 48px}
-  .grid2{display:grid;grid-template-columns:1.15fr .85fr;gap:22px;align-items:start}
-  @media(max-width:880px){.grid2{grid-template-columns:1fr}}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
-  .card-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:11px}
-  .card-head .ic{width:34px;height:34px;border-radius:9px;background:var(--green-50);color:var(--green-700);display:grid;place-items:center;font-size:18px}
-  .card-head h2{margin:0;font-size:1.02rem;font-weight:650}
-  .card-head span{display:block;font-size:.76rem;color:var(--muted);font-weight:400}
-  .card-body{padding:20px 22px}
-  /* Form */
-  .field{margin-bottom:14px}
-  .field > label{display:flex;align-items:center;gap:7px;font-size:.82rem;font-weight:600;margin-bottom:6px;color:#334155}
-  .req{color:var(--green-600);font-weight:800}
-  .hint{font-size:.72rem;color:var(--muted);font-weight:400}
-  select,input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:.92rem;background:#fff;color:var(--ink);transition:border-color .15s,box-shadow .15s}
-  select:focus,input:focus{outline:none;border-color:var(--green-600);box-shadow:0 0 0 3px var(--green-100)}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:13px}
-  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px}
-  @media(max-width:560px){.row2,.row3{grid-template-columns:1fr}}
-  .autofill{font-size:.72rem;color:var(--amber);display:flex;align-items:center;gap:5px;margin-top:4px}
-  /* Buttons */
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:11px;padding:13px 18px;font-size:.95rem;font-weight:600;cursor:pointer;transition:transform .08s,background .15s,opacity .15s}
-  .btn:active{transform:translateY(1px)}
-  .btn-primary{background:var(--green-600);color:#fff;width:100%;margin-top:6px}
-  .btn-primary:hover{background:var(--green-700)}
-  .btn-ghost{background:var(--green-50);color:var(--green-700);padding:9px 14px;font-size:.84rem}
-  .btn-ghost:hover{background:var(--green-100)}
-  /* GPS bar */
-  .gps{display:flex;align-items:center;gap:10px;background:var(--green-50);border:1px solid var(--green-100);border-radius:11px;padding:11px 13px;margin-bottom:16px}
-  .gps .status{font-size:.8rem;color:var(--green-700);font-weight:500}
-  .gps .status.err{color:#b91c1c}
-  /* Output report */
-  .report{margin-top:18px;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:none}
-  .report.show{display:block;animation:fade .25s ease}
-  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-  .report .r-head{background:var(--green-900);color:#fff;padding:13px 18px;display:flex;justify-content:space-between;align-items:center}
-  .report .r-head .yield{font-size:1.45rem;font-weight:700}
-  .report .r-head small{display:block;font-size:.72rem;opacity:.8;font-weight:400}
-  .report .r-body{padding:16px 18px}
-  .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:0 0 14px}
-  .kv .cell{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 11px}
-  .kv .cell b{display:block;font-size:.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
-  .kv .cell span{font-size:.92rem;font-weight:600}
-  .bars{font-size:.8rem}
-  .bars .b{display:flex;align-items:center;gap:9px;margin:6px 0}
-  .bars .b .nm{width:96px;color:#334155;font-weight:500}
-  .bars .b .track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden}
-  .bars .b .fill{height:100%;background:linear-gradient(90deg,var(--green-600),var(--green-700));border-radius:99px}
-  .bars .b .val{width:46px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
-  /* Recommend list */
-  .rec{display:flex;flex-direction:column;gap:11px;margin-top:8px}
-  .rec .item{display:flex;align-items:center;gap:14px;padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:#fff}
-  .rec .rank{width:30px;height:30px;border-radius:50%;background:var(--green-600);color:#fff;display:grid;place-items:center;font-weight:700;font-size:.85rem;flex:none}
-  .rec .item:nth-child(2) .rank{background:#0891b2}
-  .rec .item:nth-child(3) .rank{background:#7c3aed}
-  .rec .meta{flex:1}
-  .rec .meta b{font-size:.95rem}
-  .rec .meta small{display:block;color:var(--muted);font-size:.74rem}
-  .rec .yield{font-weight:700;color:var(--green-700);font-size:1.02rem;white-space:nowrap}
-  .rec .yield small{display:block;text-align:right;color:var(--muted);font-weight:400;font-size:.68rem}
-  /* Side metrics */
-  .side .card-body{padding:16px 18px}
-  .metric{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px dashed var(--line);font-size:.86rem}
-  .metric:last-child{border-bottom:0}
-  .metric b{font-size:1.05rem;color:var(--green-700)}
-  .tag{display:inline-block;background:var(--green-100);color:var(--green-900);font-size:.7rem;font-weight:600;padding:3px 9px;border-radius:99px;margin:3px 4px 0 0}
-  .note{font-size:.74rem;color:var(--muted);margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
-  footer{max-width:1040px;margin:0 auto;padding:20px 22px 40px;color:var(--muted);font-size:.76rem;text-align:center}
-  .iconbtn{display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:10px 14px;font-size:1.5rem;cursor:pointer;min-width:78px;transition:.15s}
-  .iconbtn small{font-size:.66rem;color:var(--muted);font-weight:600}
-  .iconbtn:hover{border-color:var(--green-600);background:var(--green-100)}
-  .iconbtn:active{transform:scale(.96)}
-  #micBtn.recording{background:#dc2626;color:#fff;border-color:#dc2626}
+  header {
+    background: linear-gradient(135deg, var(--primary-deep) 0%, var(--primary-dark) 60%, var(--primary) 100%);
+    color: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 24px rgba(4, 120, 87, 0.15);
+    position: relative;
+    overflow: hidden;
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 350px;
+    height: 350px;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .nav {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    position: relative;
+    z-index: 1;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .logo-badge {
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(8px);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform var(--duration-fast) var(--ease-spring);
+  }
+  .logo-badge:hover {
+    transform: scale(1.08) rotate(-4deg);
+  }
+  .brand-title h1 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+  .brand-title p {
+    font-size: 0.78rem;
+    opacity: 0.88;
+    font-weight: 500;
+  }
+  .header-badges {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .badge-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    transition: background var(--duration-fast) var(--ease-snappy);
+  }
+  .badge-live:hover { background: rgba(255, 255, 255, 0.24); }
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    background: #4ade80;
+    border-radius: 50%;
+    animation: pulseDot 2s infinite var(--ease-spring);
+  }
+  @keyframes pulseDot {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+  }
+
+  /* Interactive Main Tabs */
+  .tab-nav {
+    max-width: 1200px;
+    margin: 16px auto 0;
+    padding: 0 24px;
+    display: flex;
+    gap: 10px;
+  }
+  .tab-btn {
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 0.82rem;
+    padding: 9px 18px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform var(--duration-fast) var(--ease-spring),
+                background var(--duration-fast) var(--ease-snappy),
+                color var(--duration-fast) var(--ease-snappy),
+                box-shadow var(--duration-fast) var(--ease-spring);
+  }
+  .tab-btn:hover {
+    transform: translateY(-2px);
+    background: #ffffff;
+    color: var(--primary-deep);
+    box-shadow: var(--shadow-sm);
+  }
+  .tab-btn:active {
+    transform: scale(0.97);
+  }
+  .tab-btn.active {
+    background: var(--primary-deep);
+    color: #ffffff;
+    border-color: var(--primary-deep);
+    box-shadow: 0 4px 14px rgba(6, 78, 59, 0.25);
+  }
+
+  /* Main Container */
+  main {
+    max-width: 1200px;
+    margin: 20px auto 40px;
+    padding: 0 24px;
+  }
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1.45fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .grid2 { grid-template-columns: 1fr; }
+  }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    transition: transform var(--duration-normal) var(--ease-spring),
+                box-shadow var(--duration-normal) var(--ease-spring),
+                border-color var(--duration-normal) var(--ease-spring);
+  }
+  .card:hover {
+    border-color: rgba(5, 150, 105, 0.3);
+    box-shadow: var(--shadow-lg);
+  }
+  .card-head {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+  }
+  .card-head .ic {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+    box-shadow: inset 0 0 0 1px var(--primary-border);
+    transition: transform var(--duration-fast) var(--ease-bounce);
+  }
+  .card:hover .card-head .ic {
+    transform: scale(1.1) rotate(4deg);
+  }
+  .card-head h2 {
+    font-size: 1.08rem;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .card-head span {
+    font-size: 0.76rem;
+    color: var(--muted);
+  }
+  .card-body {
+    padding: 24px;
+  }
+
+  /* Location Hub */
+  .location-hub {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+    border: 1px solid var(--primary-border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.8);
+    transition: box-shadow var(--duration-fast) var(--ease-spring);
+  }
+  .location-hub:focus-within {
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+  }
+  .location-inputs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .btn-gps {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #fff;
+    border: none;
+    padding: 9px 15px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+    transition: transform var(--duration-micro) var(--ease-spring),
+                box-shadow var(--duration-fast) var(--ease-spring);
+    flex-shrink: 0;
+  }
+  .btn-gps:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
+  }
+  .btn-gps:active {
+    transform: scale(0.97);
+  }
+  .search-wrapper {
+    flex: 1;
+    min-width: 220px;
+    display: flex;
+    position: relative;
+  }
+  .search-wrapper input {
+    width: 100%;
+    padding: 8px 40px 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    background: #ffffff;
+    outline: none;
+    transition: border-color var(--duration-fast) var(--ease-snappy),
+                box-shadow var(--duration-fast) var(--ease-spring);
+  }
+  .search-wrapper input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+  }
+  .search-wrapper button {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    padding: 4px;
+    color: var(--muted);
+    transition: color var(--duration-micro), transform var(--duration-micro);
+  }
+  .search-wrapper button:hover {
+    color: var(--primary);
+    transform: translateY(-50%) scale(1.15);
+  }
+  .hub-status {
+    margin-top: 10px;
+    font-size: 0.77rem;
+    color: var(--ink-light);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .place-dropdown {
+    margin-top: 8px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+    z-index: 100;
+    position: relative;
+  }
+
+  /* 3-Day Weather Card Widget */
+  .weather-widget {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #e0f2fe 100%);
+    border: 1px solid var(--primary-border);
+    border-radius: var(--radius-md);
+    padding: 18px;
+    margin-bottom: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .weather-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .weather-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .weather-title b {
+    font-size: 0.9rem;
+    color: var(--primary-deep);
+    display: block;
+  }
+  .weather-title span {
+    font-size: 0.74rem;
+    color: var(--muted);
+  }
+  .weather-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  @media (max-width: 600px) {
+    .weather-cards-grid { grid-template-columns: 1fr; }
+  }
+  .weather-card-item {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: var(--radius-md);
+    padding: 14px 12px;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--duration-fast) var(--ease-spring),
+                box-shadow var(--duration-fast) var(--ease-spring),
+                border-color var(--duration-fast) var(--ease-snappy);
+    position: relative;
+  }
+  .weather-card-item:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 10px 20px rgba(5, 150, 105, 0.15);
+    border-color: var(--primary);
+  }
+  .weather-card-item.selected {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary);
+    background: #ffffff;
+  }
+  .w-day { font-size: 0.82rem; font-weight: 800; color: var(--ink); }
+  .w-date { font-size: 0.68rem; color: var(--muted); margin-bottom: 6px; }
+  .w-icon { font-size: 28px; margin: 4px 0; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08)); }
+  .w-cond { font-size: 0.72rem; font-weight: 600; color: var(--ink-light); margin-bottom: 4px; }
+  .w-temp { font-size: 1.05rem; font-weight: 800; color: var(--ink); }
+  .w-temp small { font-size: 0.75rem; color: var(--muted); font-weight: 600; }
+  .w-badge {
+    margin-top: 6px;
+    display: inline-block;
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 999px;
+  }
+
+  /* Expandable Spray & Hourly Advisory Drawer */
+  .weather-advisory-box {
+    background: rgba(255, 255, 255, 0.92);
+    border-left: 4px solid var(--primary);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-size: 0.76rem;
+    color: var(--ink-light);
+    line-height: 1.45;
+    box-shadow: var(--shadow-sm);
+  }
+  .weather-hourly-drawer {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: #ffffff;
+    border: 1px dashed var(--primary-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.74rem;
+    color: var(--ink-light);
+    display: none;
+    animation: fadeInDown var(--duration-fast) var(--ease-spring);
+  }
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Form Layout */
+  .section-label {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--primary-deep);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 22px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .req { color: #ef4444; }
+  .hint { font-size: 0.7rem; color: var(--muted); font-weight: 500; }
+  .row2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 12px;
+  }
+  .row3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  @media (max-width: 600px) {
+    .row2, .row3 { grid-template-columns: 1fr; }
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .field label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--ink-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .field input, .field select {
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    background: #fff;
+    color: var(--ink);
+    outline: none;
+    font-family: inherit;
+    transition: border-color var(--duration-fast) var(--ease-snappy),
+                box-shadow var(--duration-fast) var(--ease-spring);
+  }
+  .field input:focus, .field select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+  }
+  .autofill-hint {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  /* Interactive NPK Slider Dial Matrix (Generative UI) */
+  .interactive-matrix-card {
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin: 14px 0;
+    transition: border-color var(--duration-fast) var(--ease-snappy);
+  }
+  .interactive-matrix-card:hover {
+    border-color: var(--primary-border);
+  }
+  .npk-slider-row {
+    margin-bottom: 12px;
+  }
+  .npk-slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.74rem;
+    margin-bottom: 4px;
+  }
+  .npk-slider-header b { color: var(--ink); }
+  .npk-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .npk-badge-opt { background: #dcfce7; color: #15803d; }
+  .npk-badge-def { background: #fef3c7; color: #b45309; }
+  .npk-badge-exc { background: #fee2e2; color: #b91c1c; }
+  .npk-slider-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .npk-slider-controls input[type=range] {
+    flex: 1;
+    height: 6px;
+    border-radius: 6px;
+    background: #e2e8f0;
+    outline: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+  }
+  .npk-slider-controls input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 2px solid #ffffff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    transition: transform var(--duration-micro) var(--ease-spring);
+  }
+  .npk-slider-controls input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.25);
+  }
+  .npk-slider-controls input[type=number] {
+    width: 70px;
+    padding: 5px 8px;
+    font-size: 0.76rem;
+    text-align: right;
+  }
+
+  /* Fertility Meter Gauge */
+  .fertility-gauge-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    margin-top: 10px;
+  }
+  .fertility-gauge-wrap span { font-size: 0.74rem; font-weight: 700; color: var(--ink-light); }
+  .fertility-bar {
+    flex: 1;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    margin: 0 12px;
+    overflow: hidden;
+    position: relative;
+  }
+  .fertility-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f59e0b, #10b981);
+    width: 85%;
+    border-radius: 999px;
+    transition: width var(--duration-normal) var(--ease-spring);
+  }
+
+  /* Action Buttons */
+  .btn-submit {
+    width: 100%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #fff;
+    border: none;
+    padding: 13px 20px;
+    border-radius: var(--radius-md);
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 18px;
+    box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+    transition: transform var(--duration-micro) var(--ease-spring),
+                box-shadow var(--duration-fast) var(--ease-spring),
+                filter var(--duration-micro);
+  }
+  .btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(5, 150, 105, 0.4);
+    filter: brightness(1.03);
+  }
+  .btn-submit:active {
+    transform: scale(0.98);
+  }
+
+  /* Prediction Report Card */
+  .report {
+    margin-top: 24px;
+    background: #ffffff;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    display: none;
+    box-shadow: var(--shadow-md);
+    animation: fadeInUp var(--duration-normal) var(--ease-spring);
+  }
+  .report.show { display: block; }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .report-head {
+    background: linear-gradient(135deg, var(--primary-deep) 0%, var(--primary) 100%);
+    color: #fff;
+    padding: 18px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .report-head small { font-size: 0.72rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.04em; }
+  .yield-metric { font-size: 2.1rem; font-weight: 800; line-height: 1.1; margin-top: 2px; }
+  .report-body { padding: 20px; }
+  .kv-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  @media (max-width: 600px) {
+    .kv-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  .kv-cell {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    font-size: 0.74rem;
+  }
+  .kv-cell b { display: block; color: var(--muted); font-size: 0.68rem; text-transform: uppercase; }
+  .kv-cell span { color: var(--ink); font-weight: 700; }
+  .bars-title {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+    font-size: 0.74rem;
+  }
+  .bar-name { width: 110px; color: var(--ink-light); font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+  .bar-track {
+    flex: 1;
+    height: 7px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary) 0%, #34d399 100%);
+    border-radius: 999px;
+    transition: width var(--duration-normal) var(--ease-spring);
+  }
+  .bar-val { width: 44px; text-align: right; color: var(--muted); font-size: 0.7rem; }
+
+  /* Recommendations */
+  .rec-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .rec-card-item {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--duration-fast) var(--ease-spring),
+                box-shadow var(--duration-fast) var(--ease-spring),
+                border-color var(--duration-fast) var(--ease-snappy);
+    animation: fadeInUp var(--duration-normal) var(--ease-spring);
+  }
+  .rec-card-item:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary);
+  }
+  .rec-rank-chip {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary-deep);
+    border: 1px solid var(--primary-border);
+    display: grid;
+    place-items: center;
+    font-size: 0.82rem;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .rec-info { flex: 1; }
+  .rec-info b { font-size: 0.92rem; color: var(--ink); display: block; }
+  .rec-info small { font-size: 0.72rem; color: var(--muted); }
+  .rec-yield-val {
+    text-align: right;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--primary-dark);
+  }
+  .rec-yield-val small { font-size: 0.68rem; color: var(--muted); display: block; font-weight: 600; }
+
+  /* Metrics Telemetry */
+  .metric-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--line);
+    font-size: 0.8rem;
+  }
+  .metric-row:last-child { border-bottom: none; }
+  .metric-row span { color: var(--muted); }
+  .metric-row b { color: var(--ink); font-weight: 700; }
+  .tag-pill {
+    display: inline-block;
+    background: var(--primary-light);
+    color: var(--primary-deep);
+    border: 1px solid var(--primary-border);
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 99px;
+    margin: 4px 4px 0 0;
+  }
+
+  /* Embedded Generative UI What-If Simulator */
+  .simulator-panel {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 24px;
+    margin-top: 24px;
+    display: none;
+    animation: fadeInUp var(--duration-normal) var(--ease-spring);
+  }
+  .simulator-panel.active { display: block; }
+
+  /* Floating AgriAI Assistant Ball */
+  #agriChatBall {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    box-shadow: 0 10px 25px rgba(5, 150, 105, 0.45), 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 9999;
+    transition: transform var(--duration-fast) var(--ease-bounce),
+                box-shadow var(--duration-fast) var(--ease-spring);
+  }
+  #agriChatBall:hover {
+    transform: scale(1.1) translateY(-2px);
+    box-shadow: 0 16px 32px rgba(5, 150, 105, 0.55);
+  }
+  #agriChatBall:active { transform: scale(0.95); }
+  .ball-pulse {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+    animation: ripplePulse 2s infinite var(--ease-spring);
+    pointer-events: none;
+  }
+  @keyframes ripplePulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+  .ball-icon { font-size: 28px; user-select: none; }
+  .ball-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 10px;
+    border: 2px solid #fff;
+  }
+
+  /* Floating Chat Window */
+  #agriChatWidget {
+    position: fixed;
+    bottom: 104px;
+    right: 28px;
+    width: 420px;
+    max-width: calc(100vw - 40px);
+    height: 620px;
+    max-height: calc(100vh - 130px);
+    background: #ffffff;
+    border-radius: 22px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 9998;
+    transition: opacity var(--duration-normal) var(--ease-spring),
+                transform var(--duration-normal) var(--ease-spring);
+  }
+  #agriChatWidget.chat-widget-hidden {
+    opacity: 0;
+    transform: translateY(24px) scale(0.94);
+    pointer-events: none;
+  }
+  .widget-header {
+    background: linear-gradient(135deg, var(--primary-deep) 0%, var(--primary-dark) 100%);
+    color: #fff;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+  }
+  .widget-title { display: flex; align-items: center; gap: 10px; }
+  .widget-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+  }
+  .widget-title h3 { font-size: 0.95rem; font-weight: 700; margin: 0; }
+  .widget-title p { font-size: 0.7rem; opacity: 0.85; margin: 0; }
+  .widget-actions { display: flex; gap: 6px; }
+  .widget-actions button {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: #fff;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    font-size: 13px;
+    transition: background var(--duration-micro), transform var(--duration-micro);
+  }
+  .widget-actions button:hover {
+    background: rgba(255, 255, 255, 0.28);
+    transform: scale(1.08);
+  }
+
+  /* Voice Audio Waveform Equalizer (motion-ui) */
+  .audio-waveform-bar {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 16px;
+  }
+  .wave-bar {
+    width: 3px;
+    height: 6px;
+    background: #4ade80;
+    border-radius: 2px;
+    transition: height var(--duration-micro);
+  }
+  .audio-waveform-bar.active .wave-bar:nth-child(1) { animation: wavePulse 0.6s infinite ease-in-out alternate; }
+  .audio-waveform-bar.active .wave-bar:nth-child(2) { animation: wavePulse 0.8s infinite ease-in-out alternate 0.15s; }
+  .audio-waveform-bar.active .wave-bar:nth-child(3) { animation: wavePulse 0.5s infinite ease-in-out alternate 0.3s; }
+  .audio-waveform-bar.active .wave-bar:nth-child(4) { animation: wavePulse 0.7s infinite ease-in-out alternate 0.1s; }
+  .audio-waveform-bar.active .wave-bar:nth-child(5) { animation: wavePulse 0.9s infinite ease-in-out alternate 0.25s; }
+  @keyframes wavePulse {
+    0% { height: 4px; }
+    100% { height: 16px; }
+  }
+
+  /* Quick Chips */
+  .quick-chips {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+  .quick-chips::-webkit-scrollbar { display: none; }
+  .chip {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--ink-light);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: transform var(--duration-micro) var(--ease-spring),
+                background var(--duration-micro),
+                border-color var(--duration-micro);
+  }
+  .chip:hover {
+    transform: translateY(-2px);
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary-deep);
+  }
+
+  /* Chat Log */
+  .chat-log-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #ffffff;
+  }
+  .chat-welcome {
+    text-align: center;
+    padding: 24px 16px;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  .welcome-icon { font-size: 36px; margin-bottom: 8px; }
+  .chat-welcome b { color: var(--ink); font-size: 0.95rem; display: block; margin-bottom: 4px; }
+  .msg-bubble {
+    max-width: 84%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    position: relative;
+    word-break: break-word;
+    animation: fadeInUp var(--duration-fast) var(--ease-spring);
+  }
+  .msg-user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #ffffff;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 2px 6px rgba(5, 150, 105, 0.2);
+  }
+  .msg-ai {
+    align-self: flex-start;
+    background: #f1f5f9;
+    color: var(--ink);
+    border-bottom-left-radius: 4px;
+    border: 1px solid #e2e8f0;
+  }
+  .msg-meta {
+    font-size: 0.65rem;
+    opacity: 0.75;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Input bar */
+  .chat-status-bar {
+    font-size: 0.72rem;
+    color: var(--primary-dark);
+    padding: 4px 16px;
+    min-height: 22px;
+    font-style: italic;
+    background: #f8fafc;
+  }
+  .widget-input-bar {
+    padding: 12px 14px;
+    background: #ffffff;
+    border-top: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .widget-input-bar input {
+    flex: 1;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    outline: none;
+    transition: border-color var(--duration-fast) var(--ease-snappy),
+                box-shadow var(--duration-fast) var(--ease-spring);
+  }
+  .widget-input-bar input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+  }
+  .btn-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: #f8fafc;
+    display: grid;
+    place-items: center;
+    font-size: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform var(--duration-micro) var(--ease-spring),
+                background var(--duration-micro);
+  }
+  .btn-icon:hover {
+    transform: scale(1.08);
+    background: var(--primary-light);
+    border-color: var(--primary);
+  }
+  .btn-icon.recording {
+    background: #ef4444;
+    color: #fff;
+    border-color: #dc2626;
+    animation: pulseDot 1s infinite;
+  }
+  .btn-send {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform var(--duration-micro) var(--ease-spring),
+                background var(--duration-micro);
+  }
+  .btn-send:hover {
+    transform: scale(1.08);
+    background: var(--primary-dark);
+  }
+  .btn-send:active { transform: scale(0.95); }
+
+  footer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 20px 48px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    text-align: center;
+  }
 </style>
 </head>
 <body>
+
 <header>
   <div class="nav">
     <div class="brand">
-      <div class="logo">🌾</div>
-      <div>
-        <h1>AgriYield</h1>
-        <p>AI Crop Yield Intelligence Platform</p>
+      <div class="logo-badge">🌾</div>
+      <div class="brand-title">
+        <h1>AgriYield AI</h1>
+        <p>Next-Gen Precision Farming &amp; Crop Intelligence Suite</p>
       </div>
     </div>
-    <div class="pill">Prototype · v2.0</div>
+    <div class="header-badges">
+      <div class="badge-live"><span class="live-dot"></span> Open-Meteo Satellite Feed Active</div>
+      <div class="badge-live" style="background:rgba(255,255,255,0.2);">📚 Hybrid RAG Active</div>
+    </div>
   </div>
 </header>
 
+<!-- Interactive View Switcher Tabs -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchView('mlView', this)">📈 ML Yield Prediction</button>
+  <button class="tab-btn" onclick="switchView('simView', this)">🧪 What-If Agronomic Simulator</button>
+</div>
+
 <main>
-  <div class="grid2">
-    <!-- LEFT: Predict -->
+  <!-- VIEW 1: ML Yield Prediction & Farm Advisory -->
+  <div id="mlView" class="grid2">
+    <!-- LEFT: Precision Yield Prediction Form -->
     <section class="card">
       <div class="card-head">
         <div class="ic">📈</div>
-        <div><h2>Yield Prediction</h2><span>Estimate tons/ha for your chosen crop &amp; soil</span></div>
+        <div>
+          <h2>Precision Yield Prediction</h2>
+          <span>Machine learning yield forecasting (t/ha) conditioned on Soil Health Card &amp; satellite weather</span>
+        </div>
       </div>
+
       <div class="card-body">
-        <div class="gps">
-          <button type="button" class="btn-ghost" onclick="useLocation()">📍 Detect my region (GPS)</button>
-          <span id="geoStatus" class="status"></span>
+        <!-- Location Hub (High Accuracy GPS + Indian Village/District Search) -->
+        <div class="location-hub">
+          <div class="location-inputs">
+            <button type="button" class="btn-gps" onclick="useLocation()" title="Acquire high-precision GPS satellite/Wi-Fi fix">
+              🎯 Exact GPS Fix
+            </button>
+            <div class="search-wrapper">
+              <input id="citySearchInput" type="text" placeholder="Or search Village / Mandal / District in India…" onkeydown="if(event.key==='Enter'){event.preventDefault();searchCityLocation();}">
+              <button type="button" onclick="searchCityLocation()" title="Search location">🔍</button>
+            </div>
+          </div>
+          <div id="citySearchResults" class="place-dropdown"></div>
+          <div id="geoStatus" class="hub-status">
+            <span>📍 Ready to detect farm location</span>
+          </div>
         </div>
 
+        <!-- 3-Day Live Agricultural Weather Widget -->
+        <div id="weatherWidget" class="weather-widget">
+          <div class="weather-head">
+            <div class="weather-title">
+              <span style="font-size:1.3rem;">🌦️</span>
+              <div>
+                <b>Live 3-Day Agricultural Weather Forecast</b>
+                <span id="weatherLoc">Connecting to Open-Meteo satellite feed…</span>
+              </div>
+            </div>
+            <button type="button" class="btn-gps" style="padding:4px 10px; font-size:0.74rem;" onclick="load3DayWeather()">🔄 Refresh</button>
+          </div>
+
+          <div id="weatherCards" class="weather-cards-grid">
+            <div style="text-align:center; padding:16px; font-size:0.78rem; color:var(--muted); grid-column:span 3;">
+              Connecting to high-resolution satellite feed…
+            </div>
+          </div>
+
+          <div id="weatherAdvisory" class="weather-advisory-box">
+            🌾 Loading agricultural spray safety &amp; field advisory…
+          </div>
+
+          <!-- Dynamic Hourly Spray Window Drawer -->
+          <div id="weatherHourlyDrawer" class="weather-hourly-drawer"></div>
+        </div>
+
+        <!-- Form Section 1: Required Inputs -->
+        <div class="section-label">🌱 1. Crop &amp; Soil Specifications <span class="req">*</span></div>
         <div class="row2">
           <div class="field">
-            <label>State / Region <span class="hint">(optional)</span></label>
-            <select id="state" onchange="statePicked()">
-              <option value="">— select —</option>
-              {% for s in states %}<option value="{{s}}">{{s}}</option>{% endfor %}
+            <label>Crop <span class="req">*</span></label>
+            <select id="crop" required onchange="onCropSelected()">
+              <option value="">— select crop —</option>
+              {% for c in crops %}<option value="{{c}}">{{c|capitalize}}</option>{% endfor %}
             </select>
           </div>
           <div class="field">
             <label>Soil Type <span class="req">*</span></label>
             <select id="soil" required>
-              <option value="">— choose —</option>
-              {% for s in soils %}<option value="{{s}}">{{s}}</option>{% endfor %}
+              <option value="">— select soil type —</option>
+              {% for s in soils %}<option value="{{s}}">{{s|capitalize}}</option>{% endfor %}
             </select>
           </div>
         </div>
 
+        <!-- Form Section 2: Regional & Climate Data -->
+        <div class="section-label">🌦️ 2. Regional &amp; Environmental Climate (Auto-filled)</div>
         <div class="row2">
           <div class="field">
-            <label>Crop <span class="req">*</span></label>
-            <select id="crop" required>
-              <option value="">— choose —</option>
-              {% for c in crops %}<option value="{{c}}">{{c}}</option>{% endfor %}
+            <label>State / Region <span class="hint">(IMD standard)</span></label>
+            <select id="state" onchange="statePicked()">
+              <option value="">— select state —</option>
+              {% for s in states %}<option value="{{s}}">{{s}}</option>{% endfor %}
             </select>
           </div>
           <div class="field">
             <label>Rainfall (mm) <span class="hint">auto-filled</span></label>
-            <input id="rainfall" type="number" step="any" placeholder="auto">
-            <div class="autofill">⚙️ Filled from IMD regional data</div>
+            <input id="rainfall" type="number" step="any" placeholder="auto-filled">
+            <div class="autofill-hint">⚙️ Auto-filled from IMD district rainfall dataset</div>
           </div>
         </div>
 
         <div class="row3">
           <div class="field">
-            <label>Temp (°C)</label>
+            <label>Temperature (°C)</label>
             <input id="temperature" type="number" step="any" placeholder="auto">
           </div>
           <div class="field">
-            <label>Humidity (%)</label>
+            <label>Relative Humidity (%)</label>
             <input id="humidity" type="number" step="any" placeholder="auto">
           </div>
           <div class="field">
             <label>Soil pH</label>
-            <input id="soil_ph" type="number" step="any" placeholder="auto">
+            <input id="soil_ph" type="number" step="any" placeholder="auto" oninput="syncFromNumber('soil_ph', 'rangePH'); updateFertilityMatrix();">
           </div>
         </div>
 
-        <div class="row3">
-          <div class="field">
-            <label>N (kg/ha)</label>
-            <input id="n" type="number" step="any" placeholder="auto">
+        <!-- Form Section 3: Interactive Soil Nutrients Matrix (Generative UI) -->
+        <div class="section-label">🧪 3. Soil Nutrients NPK &amp; Health Matrix (Interactive)</div>
+        <div class="interactive-matrix-card">
+          <!-- Nitrogen Slider + Input -->
+          <div class="npk-slider-row">
+            <div class="npk-slider-header">
+              <b>Nitrogen (N kg/ha)</b>
+              <span id="badgeN" class="npk-badge npk-badge-opt">Optimal</span>
+            </div>
+            <div class="npk-slider-controls">
+              <input id="rangeN" type="range" min="0" max="220" value="80" oninput="syncFromRange('rangeN', 'n'); updateFertilityMatrix();">
+              <input id="n" type="number" step="any" placeholder="80" value="80" oninput="syncFromNumber('n', 'rangeN'); updateFertilityMatrix();">
+            </div>
           </div>
-          <div class="field">
-            <label>P (kg/ha)</label>
-            <input id="p" type="number" step="any" placeholder="auto">
+
+          <!-- Phosphorus Slider + Input -->
+          <div class="npk-slider-row">
+            <div class="npk-slider-header">
+              <b>Phosphorus (P kg/ha)</b>
+              <span id="badgeP" class="npk-badge npk-badge-opt">Optimal</span>
+            </div>
+            <div class="npk-slider-controls">
+              <input id="rangeP" type="range" min="0" max="150" value="50" oninput="syncFromRange('rangeP', 'p'); updateFertilityMatrix();">
+              <input id="p" type="number" step="any" placeholder="50" value="50" oninput="syncFromNumber('p', 'rangeP'); updateFertilityMatrix();">
+            </div>
           </div>
-          <div class="field">
-            <label>K (kg/ha)</label>
-            <input id="k" type="number" step="any" placeholder="auto">
+
+          <!-- Potassium Slider + Input -->
+          <div class="npk-slider-row">
+            <div class="npk-slider-header">
+              <b>Potassium (K kg/ha)</b>
+              <span id="badgeK" class="npk-badge npk-badge-opt">Optimal</span>
+            </div>
+            <div class="npk-slider-controls">
+              <input id="rangeK" type="range" min="0" max="180" value="40" oninput="syncFromRange('rangeK', 'k'); updateFertilityMatrix();">
+              <input id="k" type="number" step="any" placeholder="40" value="40" oninput="syncFromNumber('k', 'rangeK'); updateFertilityMatrix();">
+            </div>
+          </div>
+
+          <!-- Live Reactive Soil Fertility Gauge -->
+          <div class="fertility-gauge-wrap">
+            <span>Soil Balance Score</span>
+            <div class="fertility-bar">
+              <div id="fertilityFill" class="fertility-fill" style="width:85%;"></div>
+            </div>
+            <b id="fertilityScore">85%</b>
           </div>
         </div>
-        <div class="autofill" style="margin:-4px 0 4px">🪪 pH / N / P / K auto-fill from Soil Health Card means — override with your own readings</div>
 
-        <button class="btn btn-primary" onclick="predict()">🔍 Predict Yield</button>
+        <button class="btn-submit" onclick="predict()">
+          ⚡ Run Machine Learning Yield Prediction
+        </button>
 
+        <!-- Prediction Result Card -->
         <div id="predOut" class="report">
-          <div class="r-head">
-            <div><small>Predicted yield</small><div class="yield" id="rYield">—</div></div>
-            <div style="text-align:right"><small id="rCrop">—</small></div>
+          <div class="report-head">
+            <div>
+              <small>Expected Crop Yield</small>
+              <div class="yield-metric" id="rYield">—</div>
+            </div>
+            <div style="text-align:right">
+              <small id="rCrop">—</small>
+              <div style="font-size:0.75rem; opacity:0.85; margin-top:2px;">AI Yield Forecast</div>
+            </div>
           </div>
-          <div class="r-body">
-            <div class="kv" id="rInputs"></div>
-            <div style="font-size:.78rem;font-weight:600;color:#334155;margin-bottom:6px">Top yield drivers (permutation importance)</div>
-            <div class="bars" id="rBars"></div>
+          <div class="report-body">
+            <div class="kv-grid" id="rInputs"></div>
+            <div class="bars-title">Key Yield Drivers (Permutation Feature Importance)</div>
+            <div id="rBars"></div>
           </div>
         </div>
 
-        <p class="note">Only <b>Crop</b> and <b>Soil Type</b> are required. All other fields auto-populate from real regional / per-crop reference data and can be edited.</p>
       </div>
     </section>
 
-    <!-- RIGHT: Recommend + metrics -->
-    <aside class="side">
-      <section class="card" style="margin-bottom:22px">
+    <!-- RIGHT: Recommendations & Model Health -->
+    <aside>
+      <!-- Best 3 Crops Recommender -->
+      <section class="card" style="margin-bottom:24px;">
         <div class="card-head">
           <div class="ic">🏆</div>
-          <div><h2>Best 3 Crops</h2><span>Ranked by model-predicted yield using your parameters</span></div>
+          <div>
+            <h2>Best 3 Crops Recommender</h2>
+            <span>AI-ranked by predicted yield using your soil &amp; climate parameters</span>
+          </div>
         </div>
         <div class="card-body">
-          <p class="note" style="margin-top:0">Uses the Crop/Soil and the parameters you entered above (rainfall, temperature, humidity, pH, N/P/K). Adjust them for your farm, then rank.</p>
-          <button class="btn btn-primary" onclick="recommend()">🥇 Recommend Top 3</button>
-          <div id="recOut" class="rec" style="display:none;margin-top:16px"></div>
+          <p style="font-size:0.78rem; color:var(--muted); margin-bottom:14px;">
+            Analyzes your soil type, rainfall, temperature, and NPK parameters to rank the top 3 most profitable crops.
+          </p>
+          <button class="btn-submit" style="margin-top:0; background:linear-gradient(135deg,#0284c7,#0369a1);" onclick="recommend()">
+            🥇 Recommend Top 3 Crops
+          </button>
+          <div id="recOut" class="rec-card-list" style="display:none;"></div>
         </div>
       </section>
 
+      <!-- ML Model Telemetry & Benchmarks -->
       <section class="card">
         <div class="card-head">
           <div class="ic">🤖</div>
-          <div><h2>Model</h2><span>Benchmarked on real data</span></div>
+          <div>
+            <h2>Model Health &amp; Benchmarks</h2>
+            <span>Trained and validated on multi-decade Indian production data</span>
+          </div>
         </div>
         <div class="card-body">
-          <div class="metric"><span>Deployed model</span><b>{{best}}</b></div>
-          <div class="metric"><span>R² (accuracy)</span><b>{{metrics.R2}}</b></div>
-          <div class="metric"><span>RMSE</span><b>{{metrics.RMSE}}</b></div>
-          <div class="metric"><span>Crops covered</span><b>{{crops|length}}</b></div>
-          <div style="margin-top:12px">
-            <span class="tag">7 models compared</span>
-            <span class="tag">Permutation importance</span>
-            <span class="tag">Explainable</span>
-            <span class="tag">Real dataset</span>
+          <div class="metric-row"><span>Deployed Model</span><b>{{best}}</b></div>
+          <div class="metric-row"><span>Model Accuracy (R²)</span><b>{{metrics.R2}}</b></div>
+          <div class="metric-row"><span>RMSE Error</span><b>{{metrics.RMSE}}</b></div>
+          <div class="metric-row"><span>Crops Supported</span><b>{{crops|length}} Crops</b></div>
+          <div style="margin-top:14px;">
+            <span class="tag-pill">7 Models Evaluated</span>
+            <span class="tag-pill">Permutation Importance</span>
+            <span class="tag-pill">Explainable AI</span>
+            <span class="tag-pill">IMD Ground Truth</span>
           </div>
         </div>
       </section>
     </aside>
   </div>
-  <!-- Floating Ball Widget Container -->
+
+  <!-- VIEW 2: Embedded Generative UI Agronomic What-If Simulator -->
+  <div id="simView" class="simulator-panel">
+    <div class="flex-between" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; border-bottom:1px solid var(--line); padding-bottom:12px;">
+      <div>
+        <h2 style="font-size:1.2rem; font-weight:800; color:var(--primary-deep); display:flex; align-items:center; gap:8px;">
+          🌾 Real-Time Yield &amp; Profit What-If Simulator
+          <span class="tag-pill" style="margin:0; background:#dcfce7; color:#166534;">Generative UI Active</span>
+        </h2>
+        <p style="font-size:0.78rem; color:var(--muted);">Simulate varying irrigation, fertilizer applications, and rainfall to discover peak agronomic returns.</p>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="chip" onclick="applyPreset('rice')">Rice Preset</button>
+        <button class="chip" onclick="applyPreset('cotton')">Cotton Preset</button>
+        <button class="chip" onclick="applyPreset('maize')">Maize Preset</button>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1.3fr; gap:24px; align-items:center;">
+      <!-- Controls -->
+      <div style="background:#f8fafc; border:1px solid var(--line); border-radius:var(--radius-md); padding:18px;">
+        <div class="npk-slider-row">
+          <div class="npk-slider-header">
+            <b>Water / Irrigation Adequacy (mm)</b>
+            <span id="simWaterVal" style="font-weight:700; color:var(--primary-dark);">1100 mm</span>
+          </div>
+          <input id="simWater" type="range" min="400" max="2200" step="50" value="1100" style="width:100%;" oninput="calcSimulator()">
+        </div>
+
+        <div class="npk-slider-row">
+          <div class="npk-slider-header">
+            <b>Nitrogen Application (N kg/ha)</b>
+            <span id="simNVal" style="font-weight:700; color:var(--primary-dark);">100 kg</span>
+          </div>
+          <input id="simN" type="range" min="20" max="220" step="5" value="100" style="width:100%;" oninput="calcSimulator()">
+        </div>
+
+        <div class="npk-slider-row">
+          <div class="npk-slider-header">
+            <b>Phosphorus &amp; Potassium Ratio (P+K)</b>
+            <span id="simPKVal" style="font-weight:700; color:var(--primary-dark);">100 kg</span>
+          </div>
+          <input id="simPK" type="range" min="20" max="200" step="5" value="100" style="width:100%;" oninput="calcSimulator()">
+        </div>
+
+        <div class="npk-slider-row" style="margin-bottom:0;">
+          <div class="npk-slider-header">
+            <b>Soil pH Balance</b>
+            <span id="simPHVal" style="font-weight:700; color:var(--primary-dark);">6.5 pH</span>
+          </div>
+          <input id="simPH" type="range" min="4.5" max="8.5" step="0.1" value="6.5" style="width:100%;" oninput="calcSimulator()">
+        </div>
+      </div>
+
+      <!-- Live Chart & Delta Cards -->
+      <div>
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:14px;">
+          <div style="background:#f0fdf4; border:1px solid var(--primary-border); border-radius:var(--radius-sm); padding:12px; text-align:center;">
+            <small style="font-size:0.68rem; color:var(--muted); text-transform:uppercase; font-weight:700; display:block;">Simulated Yield</small>
+            <b id="simYieldOut" style="font-size:1.6rem; color:var(--primary-deep);">4.62</b>
+            <span style="font-size:0.7rem; color:var(--primary-dark); font-weight:700; display:block;">t/ha</span>
+          </div>
+          <div style="background:#f0fdf4; border:1px solid var(--primary-border); border-radius:var(--radius-sm); padding:12px; text-align:center;">
+            <small style="font-size:0.68rem; color:var(--muted); text-transform:uppercase; font-weight:700; display:block;">Est. Revenue / ha</small>
+            <b id="simRevOut" style="font-size:1.5rem; color:#0369a1;">₹1.01L</b>
+            <span style="font-size:0.7rem; color:#0284c7; font-weight:700; display:block;">MSP Benchmark</span>
+          </div>
+          <div style="background:#f0fdf4; border:1px solid var(--primary-border); border-radius:var(--radius-sm); padding:12px; text-align:center;">
+            <small style="font-size:0.68rem; color:var(--muted); text-transform:uppercase; font-weight:700; display:block;">Agronomic Status</small>
+            <b id="simPlateauStatus" style="font-size:0.95rem; color:#15803d; line-height:2.2;">Optimal Zone</b>
+          </div>
+        </div>
+
+        <!-- Dynamic SVG Response Curve -->
+        <div style="background:#f8fafc; border:1px solid var(--line); border-radius:var(--radius-sm); padding:12px;">
+          <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--muted); margin-bottom:6px;">
+            <span>📈 Yield Response Function</span>
+            <span>Operating Point 🔴</span>
+          </div>
+          <svg id="simSvg" viewBox="0 0 400 120" style="width:100%; height:110px; overflow:visible;">
+            <defs>
+              <linearGradient id="simGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#10b981" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="#10b981" stop-opacity="0.0"/>
+              </linearGradient>
+            </defs>
+            <path id="simCurveArea" d="" fill="url(#simGrad)"></path>
+            <path id="simCurveLine" d="" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round"></path>
+            <circle id="simPoint" cx="200" cy="40" r="5" fill="#ef4444" stroke="#ffffff" stroke-width="2"></circle>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating AgriAI Chatbot Ball -->
   <div id="agriChatBall" onclick="toggleChatWidget()" title="Ask AgriAI Assistant">
     <div class="ball-pulse"></div>
     <div class="ball-icon">🤖</div>
     <div class="ball-badge">AI</div>
-    <div class="ball-status-dot"></div>
   </div>
 
   <!-- Floating Chat Window -->
@@ -255,24 +1495,32 @@
       <div class="widget-title">
         <div class="widget-avatar">🌾</div>
         <div>
-          <h3>AgriAI Assistant <span style="background:rgba(34,197,94,0.15);color:#15803d;font-size:0.68rem;padding:2px 6px;border-radius:4px;margin-left:6px;font-weight:600">📚 RAG Engine</span></h3>
-          <p><span class="live-dot"></span> Senior Agronomist · Voice &amp; Vision</p>
+          <h3>AgriAI Assistant <span style="background:rgba(255,255,255,0.2); font-size:0.65rem; padding:2px 6px; border-radius:4px; font-weight:700;">📚 RAG + Web</span></h3>
+          <p>Expert Agronomist · Voice &amp; Vision Doctor</p>
         </div>
       </div>
       <div class="widget-actions">
-        <button onclick="toggleAudioMute()" id="muteBtn" title="Toggle Audio Response">🔊</button>
-        <button onclick="clearChat()" title="Clear Chat History">🗑️</button>
+        <!-- Live Audio Waveform visualizer -->
+        <div id="headerWaveform" class="audio-waveform-bar" title="Voice Channel Active">
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+        </div>
+        <button onclick="toggleAudioMute()" id="muteBtn" title="Toggle Audio Voice">🔊</button>
+        <button onclick="clearChat()" title="Clear Chat">🗑️</button>
         <button onclick="toggleChatWidget()" title="Close Window">✕</button>
       </div>
     </div>
 
     <!-- Suggested Quick Action Chips -->
     <div class="quick-chips">
-      <button class="chip" onclick="quickAsk('మా నేలకు ఏ పంట మంచిది?')">🌾 Best Crop</button>
-      <button class="chip" onclick="quickAsk('వరి పంటకు ఎరువుల మోతాదు ఎంత?')">💩 Fertilizer</button>
+      <button class="chip" onclick="quickAsk('ఈ వాతావరణంలో ఎరువులు వేయవచ్చా?')">🌦️ Spray Today?</button>
+      <button class="chip" onclick="quickAsk('వరి పంటకు ఎరువుల మోతాదు ఎంత?')">💩 Rice NPK</button>
+      <button class="chip" onclick="quickAsk('How to cultivate dragon fruit in India?')">🐉 Dragon Fruit</button>
       <button class="chip" onclick="quickAsk('మొక్కాకు తెగులు గుర్తింపు మరియు చికిత్స?')">🌿 Leaf Disease</button>
-      <button class="chip" onclick="quickAsk('నా పొలంలో ఎంత దిగుబడి వస్తుంది?')">📊 Yield Tips</button>
-      <button class="chip" onclick="quickAsk('చిన్న రైతులకు ఉన్న ప్రభుత్వ పథకాలు ఏమిటి?')">🏛️ Govt Schemes</button>
+      <button class="chip" onclick="quickAsk('What are the benefits of PM-KISAN scheme?')">🏛️ PM-KISAN</button>
     </div>
 
     <!-- Scrollable Chat Body -->
@@ -280,7 +1528,7 @@
       <div class="chat-welcome">
         <div class="welcome-icon">🤖</div>
         <b>Namaste! I am AgriAI</b>
-        <p>Your AI Agricultural Advisor. Ask me anything in Telugu, English, or Hindi, or upload a leaf photo for instant plant diagnosis!</p>
+        <p>Your AI Agricultural Advisor with Live 3-Day Weather &amp; Vector RAG. Ask me anything in Telugu, English, or Hindi, or upload a leaf photo for instant diagnosis!</p>
       </div>
     </div>
 
@@ -294,308 +1542,172 @@
         <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="uploadImage(this)">
       </label>
       <input id="chatInput" type="text" placeholder="Ask AgriAI / మీ ప్రశ్న టైప్ చేయండి..." onkeydown="if(event.key==='Enter')askAI()">
-      <button id="micBtn" class="btn-icon" onclick="toggleMic()" title="Tap to speak voice query">🎤</button>
+      <button id="micBtn" class="btn-icon" onclick="toggleMic()" title="Tap to speak (ChatGPT/Gemini Voice Engine)">🎤</button>
       <button class="btn-send" onclick="askAI()" title="Send Message">➤</button>
     </div>
   </div>
-
 </main>
 
 <footer>
-  Smart Farming · AI Crop Yield Intelligence — prototype for academic submission.
+  🌾 AgriYield AI Intelligence Platform · Academic &amp; Agricultural Innovation Suite
 </footer>
-
-<style>
-  /* Floating Ball & Widget Styling */
-  #agriChatBall {
-    position: fixed;
-    bottom: 28px;
-    right: 28px;
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #15803d, #16a34a);
-    box-shadow: 0 8px 24px rgba(22, 163, 74, 0.4), 0 2px 8px rgba(0, 0, 0, 0.15);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 99999;
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
-  }
-  #agriChatBall:hover {
-    transform: scale(1.08) translateY(-2px);
-    box-shadow: 0 12px 30px rgba(22, 163, 74, 0.5);
-  }
-  #agriChatBall .ball-icon {
-    font-size: 30px;
-    line-height: 1;
-  }
-  #agriChatBall .ball-badge {
-    position: absolute;
-    top: -4px;
-    right: -4px;
-    background: #b45309;
-    color: #fff;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 99px;
-    border: 2px solid #fff;
-  }
-  #agriChatBall .ball-status-dot {
-    position: absolute;
-    bottom: 2px;
-    right: 4px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #22c55e;
-    border: 2px solid #fff;
-  }
-  .ball-pulse {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    border: 2px solid rgba(34, 197, 94, 0.6);
-    animation: pulseGlow 2s infinite;
-    pointer-events: none;
-  }
-  @keyframes pulseGlow {
-    0% { transform: scale(0.95); opacity: 0.8; }
-    70% { transform: scale(1.35); opacity: 0; }
-    100% { transform: scale(1.35); opacity: 0; }
-  }
-
-  /* Chat Popup Widget */
-  #agriChatWidget {
-    position: fixed;
-    bottom: 102px;
-    right: 28px;
-    width: 410px;
-    max-width: calc(100vw - 36px);
-    height: 560px;
-    max-height: calc(100vh - 120px);
-    background: #ffffff;
-    border: 1px solid var(--line);
-    border-radius: 20px;
-    box-shadow: 0 16px 48px rgba(15, 23, 42, 0.18), 0 4px 12px rgba(15, 23, 42, 0.08);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    z-index: 99999;
-    transform-origin: bottom right;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
-  }
-  #agriChatWidget.chat-widget-hidden {
-    display: none;
-    transform: scale(0.8) translateY(20px);
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .widget-header {
-    background: linear-gradient(135deg, #14532d, #15803d);
-    color: #fff;
-    padding: 14px 18px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .widget-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .widget-avatar {
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.2);
-    display: grid;
-    place-items: center;
-    font-size: 20px;
-  }
-  .widget-title h3 {
-    margin: 0;
-    font-size: 1.02rem;
-    font-weight: 650;
-  }
-  .widget-title p {
-    margin: 0;
-    font-size: 0.72rem;
-    opacity: 0.85;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .live-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #4ade80;
-    display: inline-block;
-  }
-  .widget-actions button {
-    background: rgba(255, 255, 255, 0.15);
-    border: none;
-    color: #fff;
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    margin-left: 4px;
-    transition: background 0.15s;
-  }
-  .widget-actions button:hover {
-    background: rgba(255, 255, 255, 0.3);
-  }
-
-  /* Quick Chips */
-  .quick-chips {
-    display: flex;
-    gap: 6px;
-    padding: 8px 12px;
-    overflow-x: auto;
-    background: #f8fafc;
-    border-bottom: 1px solid var(--line);
-    white-space: nowrap;
-  }
-  .quick-chips::-webkit-scrollbar { height: 4px; }
-  .quick-chips::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-  .chip {
-    background: #fff;
-    border: 1px solid #cbd5e1;
-    border-radius: 99px;
-    padding: 4px 10px;
-    font-size: 0.74rem;
-    font-weight: 550;
-    color: #334155;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .chip:hover {
-    background: var(--green-50);
-    border-color: var(--green-600);
-    color: var(--green-700);
-  }
-
-  /* Chat Body & Messages */
-  .chat-log-container {
-    flex: 1;
-    overflow-y: auto;
-    padding: 14px;
-    background: #f8fafc;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  .chat-welcome {
-    text-align: center;
-    padding: 18px 12px;
-    background: #fff;
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    margin-bottom: 6px;
-  }
-  .chat-welcome .welcome-icon { font-size: 32px; margin-bottom: 6px; }
-  .chat-welcome b { font-size: 0.95rem; color: var(--green-900); display: block; }
-  .chat-welcome p { font-size: 0.78rem; color: var(--muted); margin: 4px 0 0; }
-
-  .msg-bubble {
-    max-width: 85%;
-    padding: 10px 14px;
-    border-radius: 14px;
-    font-size: 0.88rem;
-    line-height: 1.45;
-    word-break: break-word;
-  }
-  .msg-user {
-    align-self: flex-end;
-    background: var(--green-700);
-    color: #fff;
-    border-bottom-right-radius: 4px;
-  }
-  .msg-ai {
-    align-self: flex-start;
-    background: #ffffff;
-    color: var(--ink);
-    border: 1px solid var(--line);
-    border-bottom-left-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  }
-  .msg-meta {
-    font-size: 0.68rem;
-    margin-top: 4px;
-    opacity: 0.75;
-    text-align: right;
-  }
-  .msg-ai .msg-meta { color: var(--muted); }
-
-  .chat-status-bar {
-    font-size: 0.74rem;
-    padding: 4px 14px;
-    color: var(--amber);
-    background: #fffbebf5;
-    min-height: 20px;
-    display: flex;
-    align-items: center;
-  }
-
-  /* Input Bar */
-  .widget-input-bar {
-    padding: 10px 12px;
-    background: #fff;
-    border-top: 1px solid var(--line);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .widget-input-bar input[type="text"] {
-    flex: 1;
-    padding: 9px 12px;
-    border: 1px solid var(--line);
-    border-radius: 20px;
-    font-size: 0.86rem;
-  }
-  .btn-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 1px solid var(--line);
-    background: #f8fafc;
-    display: grid;
-    place-items: center;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background 0.15s;
-    flex-shrink: 0;
-  }
-  .btn-icon:hover { background: var(--green-100); border-color: var(--green-600); }
-  .btn-icon.recording { background: #ef4444; color: #fff; border-color: #dc2626; animation: micPulse 1s infinite; }
-  @keyframes micPulse { 0%{transform:scale(1);} 50%{transform:scale(1.1);} 100%{transform:scale(1);} }
-
-  .btn-send {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: none;
-    background: var(--green-600);
-    color: #fff;
-    display: grid;
-    place-items: center;
-    font-size: 14px;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background 0.15s;
-  }
-  .btn-send:hover { background: var(--green-700); }
-</style>
 
 <script>
 let audioMuted = false;
+let current3DayWeatherSummary = '';
+let cachedForecastDays = [];
+
+/* ---- Tab Navigation ---- */
+function switchView(viewId, btn){
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if(viewId === 'mlView'){
+    document.getElementById('mlView').style.display = 'grid';
+    document.getElementById('simView').classList.remove('active');
+  } else {
+    document.getElementById('mlView').style.display = 'none';
+    document.getElementById('simView').classList.add('active');
+    calcSimulator();
+  }
+}
+
+/* ---- Synchronized NPK & Soil Health Controls ---- */
+function syncFromRange(rangeId, numId){
+  var val = document.getElementById(rangeId).value;
+  document.getElementById(numId).value = val;
+}
+function syncFromNumber(numId, rangeId){
+  var val = document.getElementById(numId).value;
+  var r = document.getElementById(rangeId);
+  if(r && val) r.value = val;
+}
+
+function updateFertilityMatrix(){
+  var n = parseFloat(document.getElementById('n').value) || 0;
+  var p = parseFloat(document.getElementById('p').value) || 0;
+  var k = parseFloat(document.getElementById('k').value) || 0;
+  var ph = parseFloat(document.getElementById('soil_ph').value) || 6.5;
+
+  // Badges
+  var bN = document.getElementById('badgeN');
+  if(n < 45){ bN.textContent = 'Deficient'; bN.className = 'npk-badge npk-badge-def'; }
+  else if(n > 140){ bN.textContent = 'Excess'; bN.className = 'npk-badge npk-badge-exc'; }
+  else { bN.textContent = 'Optimal'; bN.className = 'npk-badge npk-badge-opt'; }
+
+  var bP = document.getElementById('badgeP');
+  if(p < 30){ bP.textContent = 'Deficient'; bP.className = 'npk-badge npk-badge-def'; }
+  else if(p > 100){ bP.textContent = 'Excess'; bP.className = 'npk-badge npk-badge-exc'; }
+  else { bP.textContent = 'Optimal'; bP.className = 'npk-badge npk-badge-opt'; }
+
+  var bK = document.getElementById('badgeK');
+  if(k < 25){ bK.textContent = 'Deficient'; bK.className = 'npk-badge npk-badge-def'; }
+  else if(k > 120){ bK.textContent = 'Excess'; bK.className = 'npk-badge npk-badge-exc'; }
+  else { bK.textContent = 'Optimal'; bK.className = 'npk-badge npk-badge-opt'; }
+
+  // Fertility Balance Score
+  var nScore = Math.min(1.0, n / 100);
+  var pScore = Math.min(1.0, p / 60);
+  var kScore = Math.min(1.0, k / 50);
+  var phScore = Math.max(0.3, 1.0 - Math.abs(ph - 6.5) * 0.15);
+
+  var totalScore = Math.round(((nScore + pScore + kScore + phScore) / 4) * 100);
+  totalScore = Math.min(100, Math.max(20, totalScore));
+  document.getElementById('fertilityFill').style.width = totalScore + '%';
+  document.getElementById('fertilityScore').textContent = totalScore + '%';
+}
+
+function onCropSelected(){
+  var crop = document.getElementById('crop').value;
+  if(!crop) return;
+  // Auto adjust default recommended NPK if fields are untouched
+  var defaults = {
+    'rice': {n: 100, p: 50, k: 50, ph: 6.5},
+    'wheat': {n: 120, p: 60, k: 40, ph: 6.8},
+    'cotton': {n: 140, p: 70, k: 70, ph: 7.2},
+    'maize': {n: 120, p: 60, k: 50, ph: 6.5},
+    'sugarcane': {n: 180, p: 80, k: 90, ph: 7.0}
+  };
+  var d = defaults[crop.toLowerCase()];
+  if(d){
+    document.getElementById('n').value = d.n;
+    document.getElementById('rangeN').value = d.n;
+    document.getElementById('p').value = d.p;
+    document.getElementById('rangeP').value = d.p;
+    document.getElementById('k').value = d.k;
+    document.getElementById('rangeK').value = d.k;
+    if(!document.getElementById('soil_ph').value) document.getElementById('soil_ph').value = d.ph;
+    updateFertilityMatrix();
+  }
+}
+
+/* ---- What-If Agronomic Simulator ---- */
+function applyPreset(crop){
+  if(crop === 'rice'){
+    document.getElementById('simWater').value = 1300;
+    document.getElementById('simN').value = 110;
+    document.getElementById('simPK').value = 100;
+    document.getElementById('simPH').value = 6.5;
+  } else if(crop === 'cotton'){
+    document.getElementById('simWater').value = 750;
+    document.getElementById('simN').value = 150;
+    document.getElementById('simPK').value = 140;
+    document.getElementById('simPH').value = 7.2;
+  } else if(crop === 'maize'){
+    document.getElementById('simWater').value = 700;
+    document.getElementById('simN').value = 130;
+    document.getElementById('simPK').value = 110;
+    document.getElementById('simPH').value = 6.8;
+  }
+  calcSimulator();
+}
+
+function calcSimulator(){
+  var water = parseFloat(document.getElementById('simWater').value);
+  var n = parseFloat(document.getElementById('simN').value);
+  var pk = parseFloat(document.getElementById('simPK').value);
+  var ph = parseFloat(document.getElementById('simPH').value);
+
+  document.getElementById('simWaterVal').textContent = water + ' mm';
+  document.getElementById('simNVal').textContent = n + ' kg';
+  document.getElementById('simPKVal').textContent = pk + ' kg';
+  document.getElementById('simPHVal').textContent = ph.toFixed(1) + ' pH';
+
+  var nEff = (1 - Math.exp(-0.022 * n));
+  var pkEff = (1 - Math.exp(-0.02 * pk));
+  var waterEff = Math.max(0.4, 1.0 - Math.pow((water - 1100)/1400, 2));
+  var phEff = Math.max(0.4, 1.0 - Math.abs(ph - 6.5) * 0.2);
+
+  var maxYield = 6.2; // t/ha
+  var yieldVal = (maxYield * nEff * pkEff * waterEff * phEff);
+  yieldVal = Math.max(0.9, Math.min(6.2, yieldVal)).toFixed(2);
+  document.getElementById('simYieldOut').textContent = yieldVal;
+
+  var rev = (yieldVal * 22000);
+  document.getElementById('simRevOut').textContent = '₹' + (rev >= 100000 ? (rev/100000).toFixed(2) + 'L' : Math.round(rev).toLocaleString('en-IN'));
+
+  var st = document.getElementById('simPlateauStatus');
+  if(n > 170) { st.textContent = 'Diminishing Returns'; st.style.color = '#b45309'; }
+  else if(n < 60 || water < 600) { st.textContent = 'Deficient (Boost N)'; st.style.color = '#dc2626'; }
+  else { st.textContent = 'Optimal Return Zone'; st.style.color = '#15803d'; }
+
+  // Draw response curve SVG
+  var pts = [];
+  for(var x = 30; x <= 370; x += 10){
+    var step = (x - 30) / 340;
+    var yStep = maxYield * (1 - Math.exp(-3.2 * step)) * waterEff * phEff;
+    var cy = 100 - (yStep / 6.2) * 85;
+    pts.push(x + ',' + cy.toFixed(1));
+  }
+  var lineD = 'M ' + pts.join(' L ');
+  document.getElementById('simCurveLine').setAttribute('d', lineD);
+  document.getElementById('simCurveArea').setAttribute('d', lineD + ' L 370,100 L 30,100 Z');
+
+  var curX = 30 + Math.min(1.0, (n/220 * 0.5 + pk/200 * 0.5)) * 340;
+  var curY = 100 - (yieldVal / 6.2) * 85;
+  var pt = document.getElementById('simPoint');
+  pt.setAttribute('cx', curX.toFixed(1));
+  pt.setAttribute('cy', Math.max(15, Math.min(100, curY)).toFixed(1));
+}
 
 function toggleChatWidget(){
   var w = document.getElementById('agriChatWidget');
@@ -613,87 +1725,289 @@ function toggleAudioMute(){
   btn.title = audioMuted ? 'Audio Muted' : 'Audio Enabled';
 }
 
+function setWaveformActive(active){
+  var wf = document.getElementById('headerWaveform');
+  if(!wf) return;
+  if(active) wf.classList.add('active');
+  else wf.classList.remove('active');
+}
+
+/* ---- 3-Day Live Weather Forecast Engine (Open-Meteo) ---- */
+function load3DayWeather(opts){
+  opts = opts || {};
+  var locEl = document.getElementById('weatherLoc');
+  var cardsEl = document.getElementById('weatherCards');
+  var advEl = document.getElementById('weatherAdvisory');
+  if(!cardsEl) return;
+
+  var st = opts.state || (document.getElementById('state') ? document.getElementById('state').value : '');
+  var body = {};
+  if(opts.lat && opts.lon){
+    body.lat = opts.lat; body.lon = opts.lon;
+    if(st) body.state = st;
+  } else if(st){
+    body.state = st;
+  }
+
+  locEl.textContent = 'Connecting to Open-Meteo satellite feed…';
+  fetch('/api/weather/3day', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body)
+  }).then(r => r.json()).then(d => {
+    if(d.forecast_days && d.forecast_days.length > 0){
+      cachedForecastDays = d.forecast_days;
+      locEl.textContent = '📍 ' + d.location;
+      advEl.innerHTML = '<b>🌾 Agricultural Field Advisory:</b> ' + d.summary_advisory;
+      current3DayWeatherSummary = d.location + ': ' + d.summary_advisory + ' Daily: ' +
+        d.forecast_days.map(x => x.day_label + ': ' + x.condition + ', ' + x.temp_min + '°C-' + x.temp_max + '°C, Rain ' + x.rain_prob + '% (' + x.rain_mm + 'mm)').join('; ');
+
+      cardsEl.innerHTML = d.forecast_days.map(function(f, idx){
+        var rainBadgeBg = f.rain_prob >= 50 ? '#dc2626' : (f.rain_prob >= 30 ? '#d97706' : '#16a34a');
+        return '<div class="weather-card-item" onclick="selectWeatherCard(' + idx + ', this)">' +
+          '<div class="w-day">' + f.day_label + '</div>' +
+          '<div class="w-date">' + f.date + '</div>' +
+          '<div class="w-icon">' + f.icon + '</div>' +
+          '<div class="w-cond">' + f.condition + '</div>' +
+          '<div class="w-temp">' + f.temp_max + '° <small>/ ' + f.temp_min + '°</small></div>' +
+          '<div class="w-badge" style="background:' + rainBadgeBg + ';">💧 ' + f.rain_prob + '% (' + f.rain_mm + 'mm)</div>' +
+        '</div>';
+      }).join('');
+
+      // Auto reveal hourly advisory for day 1
+      selectWeatherCard(0, cardsEl.children[0]);
+    }
+  }).catch(e => {
+    locEl.textContent = 'Weather feed temporarily offline';
+  });
+}
+
+function selectWeatherCard(idx, el){
+  document.querySelectorAll('.weather-card-item').forEach(c => c.classList.remove('selected'));
+  if(el) el.classList.add('selected');
+  var f = cachedForecastDays[idx];
+  if(!f) return;
+  var drawer = document.getElementById('weatherHourlyDrawer');
+  if(!drawer) return;
+  drawer.style.display = 'block';
+
+  var spraySafe = f.rain_prob < 40 && (f.wind_speed || 10) < 18;
+  drawer.innerHTML = '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+    '<span><b>' + f.day_label + ' (' + f.date + ') Field Operations:</b> ' +
+    (spraySafe ? '<span style="color:#15803d; font-weight:700;">🟢 Safe Spray Window: 06:00 - 09:30 AM</span>' : '<span style="color:#dc2626; font-weight:700;">🔴 Delay Spraying (High rain risk: ' + f.rain_prob + '%)</span>') +
+    '</span>' +
+    '<span style="color:var(--muted); font-size:0.7rem;">💨 Wind: ' + (f.wind_speed || '10') + ' km/h</span>' +
+    '</div>';
+}
+
+/* ---- High-Precision Hardware GPS Fix ---- */
 function useLocation(){
-  var s=document.getElementById('geoStatus');
-  if(!navigator.geolocation){s.textContent='GPS not supported on this device.';s.className='status err';return;}
-  s.textContent='Detecting location…';s.className='status';
+  var s = document.getElementById('geoStatus');
+  if(!navigator.geolocation){
+    s.innerHTML = '<span style="color:#dc2626;">⚠️ GPS is not supported on this browser/device.</span>';
+    return;
+  }
+  s.innerHTML = '⏳ <i>Acquiring high-accuracy GPS fix…</i>';
+
+  var geoOptions = {
+    enableHighAccuracy: true,
+    timeout: 12000,
+    maximumAge: 0
+  };
+
   navigator.geolocation.getCurrentPosition(function(pos){
-    fetch('/api/geo',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({lat:pos.coords.latitude,lon:pos.coords.longitude})})
-    .then(r=>r.json()).then(d=>{
-      if(d.error){s.textContent='GPS error: '+d.error;s.className='status err';return;}
-      document.getElementById('rainfall').value=d.rainfall;
-      var sd=document.getElementById('state');
-      for(var i=0;i<sd.options.length;i++){ if(sd.options[i].value===d.state){sd.selectedIndex=i;break;} }
-      s.textContent='📍 '+d.message;
-    }).catch(e=>{s.textContent='GPS lookup failed.';s.className='status err';});
-  },function(){s.textContent='Location permission denied.';s.className='status err';});
+    var lat = pos.coords.latitude;
+    var lon = pos.coords.longitude;
+    var acc = Math.round(pos.coords.accuracy || 0);
+    var accBadge = acc > 0 ? (acc <= 80 ? ' <span style="color:#15803d; font-weight:700;">(🎯 ±' + acc + 'm high precision)</span>' : ' <span style="color:#b45309; font-weight:600;">(⚠️ ±' + (acc >= 1000 ? (acc/1000).toFixed(1) + 'km' : acc + 'm') + ' approximate)</span>') : '';
+
+    fetch('/api/geo', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({lat: lat, lon: lon})
+    })
+    .then(r => r.json())
+    .then(d => {
+      if(d.error){ s.innerHTML = '<span style="color:#dc2626;">GPS error: ' + d.error + '</span>'; return; }
+      if(d.rainfall) document.getElementById('rainfall').value = d.rainfall;
+      var sd = document.getElementById('state');
+      if(sd && d.state){
+        for(var i = 0; i < sd.options.length; i++){
+          var optVal = sd.options[i].value.toLowerCase();
+          var targetVal = d.state.toLowerCase();
+          if(optVal === targetVal || optVal.includes(targetVal) || targetVal.includes(optVal)){
+            sd.selectedIndex = i;
+            break;
+          }
+        }
+      }
+      s.innerHTML = d.message + accBadge + ' <span style="font-size:0.72rem; color:#64748b;">[' + lat.toFixed(4) + ', ' + lon.toFixed(4) + ']</span>';
+      load3DayWeather({lat: lat, lon: lon, state: d.state});
+    }).catch(e => {
+      s.innerHTML = '<span style="color:#dc2626;">GPS resolution failed.</span>';
+    });
+  }, function(err){
+    var msg = 'Location access denied or unavailable.';
+    if(err.code === 1) msg = 'Location permission denied by browser. Please search your town above.';
+    else if(err.code === 2) msg = 'GPS signal unavailable. Please search your Village / Town / District in the search bar above.';
+    else if(err.code === 3) msg = 'GPS fix timed out. Please search your Village / District in the search bar above.';
+    s.innerHTML = '<span style="color:#dc2626;">⚠️ ' + msg + '</span>';
+  }, geoOptions);
+}
+
+/* ---- Indian Town / Village / District Search ---- */
+function searchCityLocation(){
+  var inp = document.getElementById('citySearchInput');
+  var q = (inp ? inp.value : '').trim();
+  if(!q) return;
+  var resDiv = document.getElementById('citySearchResults');
+  var s = document.getElementById('geoStatus');
+  resDiv.style.display = 'block';
+  resDiv.innerHTML = '<div style="padding:6px; color:var(--muted); font-size:.76rem;">Searching Indian places for "' + q + '"…</div>';
+
+  fetch('/api/geo/search?q=' + encodeURIComponent(q))
+  .then(r => r.json())
+  .then(places => {
+    if(!places || places.length === 0){
+      resDiv.innerHTML = '<span style="color:#dc2626; padding:6px; font-size:.76rem; display:block;">No places found for "' + q + '". Try nearby district or town.</span>';
+      return;
+    }
+    resDiv.innerHTML = places.map(function(p){
+      var escName = (p.name || '').replace(/'/g, "\'");
+      var escState = (p.state || '').replace(/'/g, "\'");
+      return '<div style="padding:7px 10px; cursor:pointer; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;" ' +
+             'onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'" ' +
+             'onclick="selectPlace(' + p.lat + ',' + p.lon + ','' + escName + '','' + escState + '')">' +
+             '<span><b>' + p.display + '</b></span>' +
+             '<span style="color:var(--muted); font-size:.7rem;">' + p.lat.toFixed(2) + ', ' + p.lon.toFixed(2) + '</span>' +
+             '</div>';
+    }).join('');
+  }).catch(e => {
+    resDiv.innerHTML = '<span style="color:#dc2626; padding:6px; font-size:.76rem; display:block;">Search failed.</span>';
+  });
+}
+
+function selectPlace(lat, lon, name, state){
+  var resDiv = document.getElementById('citySearchResults');
+  if(resDiv) resDiv.style.display = 'none';
+  var inp = document.getElementById('citySearchInput');
+  if(inp) inp.value = name;
+  var s = document.getElementById('geoStatus');
+  s.innerHTML = '📍 <b>' + name + (state ? ', ' + state : '') + '</b> <span style="color:#15803d; font-weight:700;">(🎯 Selected Place)</span> <span style="font-size:0.72rem; color:#64748b;">[' + lat.toFixed(4) + ', ' + lon.toFixed(4) + ']</span>';
+
+  fetch('/api/geo', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({lat: lat, lon: lon})
+  }).then(r => r.json()).then(d => {
+    if(d.rainfall) document.getElementById('rainfall').value = d.rainfall;
+    var sd = document.getElementById('state');
+    var targetState = state || d.state;
+    if(sd && targetState){
+      for(var i = 0; i < sd.options.length; i++){
+        var optVal = sd.options[i].value.toLowerCase();
+        var tVal = targetState.toLowerCase();
+        if(optVal === tVal || optVal.includes(tVal) || tVal.includes(optVal)){
+          sd.selectedIndex = i;
+          break;
+        }
+      }
+    }
+  });
+
+  load3DayWeather({lat: lat, lon: lon, state: state});
 }
 
 function statePicked(){
-  var st=document.getElementById('state').value;
+  var st = document.getElementById('state').value;
   if(!st) return;
-  fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:st})})
-  .then(r=>r.json()).then(d=>{
-    if(d.rainfall){document.getElementById('rainfall').value=d.rainfall;
-      document.getElementById('geoStatus').textContent='🏛️ '+d.message;document.getElementById('geoStatus').className='status';}
+  fetch('/api/state', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({state:st})})
+  .then(r => r.json()).then(d => {
+    if(d.rainfall){
+      document.getElementById('rainfall').value = d.rainfall;
+      document.getElementById('geoStatus').innerHTML = '🏛️ <b>' + d.message + '</b>';
+    }
+    load3DayWeather({state: st});
   });
 }
 
+/* ---- ML Yield Prediction Engine ---- */
 function predict(){
-  var crop=document.getElementById('crop').value;
-  var soil=document.getElementById('soil').value;
-  if(!crop||!soil){alert('Crop and Soil Type are required.');return;}
-  var f=new FormData();
-  f.append('crop',crop); f.append('soil',soil);
+  var crop = document.getElementById('crop').value;
+  var soil = document.getElementById('soil').value;
+  if(!crop || !soil){
+    alert('Crop and Soil Type are required.');
+    return;
+  }
+  var f = new FormData();
+  f.append('crop', crop);
+  f.append('soil', soil);
   ['rainfall','temperature','humidity','soil_ph','n','p','k'].forEach(function(id){
-    var v=document.getElementById(id).value; if(v) f.append(id,v);
+    var v = document.getElementById(id).value;
+    if(v) f.append(id, v);
   });
-  fetch('/api/predict',{method:'POST',body:f}).then(r=>r.json()).then(d=>{
-    var o=document.getElementById('predOut');
-    if(d.error){o.classList.add('show');document.getElementById('rYield').textContent='Error';return;}
+  fetch('/api/predict', {method:'POST', body:f}).then(r => r.json()).then(d => {
+    var o = document.getElementById('predOut');
+    if(d.error){
+      o.classList.add('show');
+      document.getElementById('rYield').textContent = 'Error';
+      return;
+    }
     o.classList.add('show');
-    document.getElementById('rYield').textContent=d.predicted_yield_tons_per_ha+' t/ha';
-    document.getElementById('rCrop').textContent=d.crop+' · '+d.soil+' soil';
-    var ui=d.used_inputs;
-    var cells=[['Crop',ui.Crop],['Soil',ui.Soil_Type],['Rainfall',ui.Rainfall+' mm'],
-      ['Temp',ui.Temperature+'°C'],['Humidity',ui.Humidity+'%'],['pH',ui.Soil_pH],
-      ['N',ui.N],['P',ui.P],['K',ui.K]];
-    document.getElementById('rInputs').innerHTML=cells.map(c=>'<div class="cell"><b>'+c[0]+'</b><span>'+c[1]+'</span></div>').join('');
-    var entries=Object.entries(d.feature_importance).sort((a,b)=>b[1]-a[1]).slice(0,5);
-    var max=entries[0][1]||1;
-    document.getElementById('rBars').innerHTML=entries.map(e=>{
-      var pct=Math.max(4,(e[1]/max*100)).toFixed(0);
-      return '<div class="b"><div class="nm">'+e[0]+'</div><div class="track"><div class="fill" style="width:'+pct+'%"></div></div><div class="val">'+e[1].toFixed(2)+'</div></div>';
+    document.getElementById('rYield').textContent = d.predicted_yield_tons_per_ha + ' t/ha';
+    document.getElementById('rCrop').textContent = d.crop.toUpperCase() + ' · ' + d.soil.toUpperCase() + ' SOIL';
+    var ui = d.used_inputs;
+    var cells = [
+      ['Crop', ui.Crop], ['Soil', ui.Soil_Type], ['Rainfall', ui.Rainfall + ' mm'],
+      ['Temp', ui.Temperature + '°C'], ['Humidity', ui.Humidity + '%'], ['pH', ui.Soil_pH],
+      ['N', ui.N + ' kg/ha'], ['P', ui.P + ' kg/ha'], ['K', ui.K + ' kg/ha']
+    ];
+    document.getElementById('rInputs').innerHTML = cells.map(c => '<div class="kv-cell"><b>' + c[0] + '</b><span>' + c[1] + '</span></div>').join('');
+    var entries = Object.entries(d.feature_importance).sort((a,b) => b[1] - a[1]).slice(0, 5);
+    var max = entries[0][1] || 1;
+    document.getElementById('rBars').innerHTML = entries.map(e => {
+      var pct = Math.max(4, (e[1]/max*100)).toFixed(0);
+      return '<div class="bar-row"><div class="bar-name">' + e[0] + '</div><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div><div class="bar-val">' + e[1].toFixed(2) + '</div></div>';
     }).join('');
   });
 }
 
+/* ---- Recommendation Engine ---- */
 function recommend(){
-  var soil=document.getElementById('soil').value;
-  if(!soil){alert('Select a Soil Type first (in the Yield Prediction form).');return;}
-  var f=new FormData(); f.append('soil',soil);
+  var soil = document.getElementById('soil').value;
+  if(!soil){
+    alert('Select a Soil Type first (in the Yield Prediction form).');
+    return;
+  }
+  var f = new FormData();
+  f.append('soil', soil);
   ['rainfall','temperature','humidity','soil_ph','n','p','k'].forEach(function(id){
-    var v=document.getElementById(id).value; if(v) f.append(id,v);
+    var v = document.getElementById(id).value;
+    if(v) f.append(id, v);
   });
-  fetch('/api/recommend',{method:'POST',body:f}).then(r=>r.json()).then(d=>{
-    var o=document.getElementById('recOut');
-    if(d.error){o.style.display='block';o.innerHTML='<div class="item"><div class="meta"><b>Error</b></div></div>';return;}
-    o.style.display='block';
-    o.innerHTML=d.top3.map((x,i)=>'<div class="item"><div class="rank">'+(i+1)+'</div>'+
-      '<div class="meta"><b>'+x.crop.charAt(0).toUpperCase()+x.crop.slice(1)+'</b><small>predicted for your inputs</small></div>'+
-      '<div class="yield">'+x.predicted_yield+' t/ha<small>predicted yield</small></div></div>').join('');
+  fetch('/api/recommend', {method:'POST', body:f}).then(r => r.json()).then(d => {
+    var o = document.getElementById('recOut');
+    if(d.error){
+      o.style.display = 'block';
+      o.innerHTML = '<div class="rec-card-item"><div class="rec-info"><b>Error</b></div></div>';
+      return;
+    }
+    o.style.display = 'flex';
+    o.innerHTML = d.top3.map((x,i) => '<div class="rec-card-item">' +
+      '<div class="rec-rank-chip">' + (i+1) + '</div>' +
+      '<div class="rec-info"><b>' + x.crop.charAt(0).toUpperCase() + x.crop.slice(1) + '</b><small>Ranked #' + (i+1) + ' for your soil &amp; climate</small></div>' +
+      '<div class="rec-yield-val">' + x.predicted_yield + ' t/ha<small>estimated yield</small></div></div>').join('');
   });
 }
 
 function quickAsk(q){
   var w = document.getElementById('agriChatWidget');
   if(w.classList.contains('chat-widget-hidden')) toggleChatWidget();
-  document.getElementById('chatInput').value=q;
+  document.getElementById('chatInput').value = q;
   askAI();
 }
 
-/* ---- Image Diagnosis upload ---- */
+/* ---- Plant Leaf Image Diagnosis Upload ---- */
 function uploadImage(input){
   if(!input.files || !input.files[0]) return;
   var file = input.files[0];
@@ -716,222 +2030,136 @@ function uploadImage(input){
   });
 }
 
-/* ---- Real-Time Gemini / ChatGPT Style Voice Engine ---- */
+/* ---- Gemini / ChatGPT Advanced Voice Engine with Equalizer Waveform ---- */
 let recognition = null, isListening = false, silenceTimer = null;
 let currentAudioElement = null, isSpeakingAI = false;
-let mediaRecorder = null, audioChunks = [];
 
-function stopAISpeech() {
-  if (currentAudioElement) {
-    try { currentAudioElement.pause(); currentAudioElement.currentTime = 0; } catch(e){}
-    currentAudioElement = null;
-  }
-  if (window.speechSynthesis) {
+function stopAISpeech(){
+  if('speechSynthesis' in window && window.speechSynthesis.speaking){
     window.speechSynthesis.cancel();
   }
+  if(currentAudioElement && !currentAudioElement.paused){
+    currentAudioElement.pause();
+    currentAudioElement.currentTime = 0;
+  }
   isSpeakingAI = false;
+  setWaveformActive(false);
 }
 
-function toggleAudioMute() {
-  audioMuted = !audioMuted;
-  var btn = document.getElementById('muteBtn');
-  if (btn) btn.textContent = audioMuted ? '🔇' : '🔊';
-  if (audioMuted) stopAISpeech();
-}
-
-function initSpeechRecognition() {
+function initSpeechRecognition(){
   var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRec) return null;
-  
+  if(!SpeechRec) return null;
   var rec = new SpeechRec();
   rec.continuous = true;
   rec.interimResults = true;
-  rec.maxAlternatives = 1;
+  rec.lang = 'te-IN'; // Defaults to Telugu or regional, auto detects
 
-  rec.onstart = function() {
+  rec.onstart = function(){
     isListening = true;
-    stopAISpeech(); // Barge-in: Stop AI talking as soon as user starts speaking
-    var btn = document.getElementById('micBtn');
-    var st = document.getElementById('chatStatus');
-    if (btn) btn.classList.add('recording');
-    if (st) st.innerHTML = '<span style="color:#ef4444;font-weight:bold">🔴 Listening...</span> Speak now (auto-sends on pause)';
+    stopAISpeech();
+    setWaveformActive(true);
+    document.getElementById('micBtn').classList.add('recording');
+    document.getElementById('chatStatus').textContent = '🎙️ Listening live… Speak naturally!';
   };
 
-  rec.onresult = function(event) {
+  rec.onresult = function(e){
     stopAISpeech();
+    var transcript = '';
+    for(var i = 0; i < e.results.length; ++i){
+      transcript += e.results[i][0].transcript;
+    }
     var inp = document.getElementById('chatInput');
-    var finalTranscript = '', interimTranscript = '';
+    inp.value = transcript;
 
-    for (var i = event.resultIndex; i < event.results.length; ++i) {
-      if (event.results[i].isFinal) {
-        finalTranscript += event.results[i][0].transcript;
-      } else {
-        interimTranscript += event.results[i][0].transcript;
-      }
-    }
-
-    var liveText = finalTranscript || interimTranscript;
-    if (liveText && inp) {
-      inp.value = liveText;
-    }
-
-    // Reset Voice Activity Detection (VAD) Auto-Silence Timer (1.2 seconds)
-    clearTimeout(silenceTimer);
-    silenceTimer = setTimeout(function() {
-      if (isListening && inp.value.trim().length > 0) {
-        stopMic();
+    if(silenceTimer) clearTimeout(silenceTimer);
+    silenceTimer = setTimeout(function(){
+      if(isListening && inp.value.trim().length > 0){
+        toggleMic();
         askAI();
       }
     }, 1200);
   };
 
-  rec.onerror = function(event) {
-    if (event.error !== 'no-speech') {
-      stopMic();
+  rec.onerror = function(e){
+    if(e.error !== 'no-speech'){
+      document.getElementById('chatStatus').textContent = '⚠ Speech error: ' + e.error;
     }
+    setWaveformActive(false);
   };
 
-  rec.onend = function() {
+  rec.onend = function(){
     isListening = false;
-    var btn = document.getElementById('micBtn');
-    if (btn) btn.classList.remove('recording');
+    document.getElementById('micBtn').classList.remove('recording');
+    document.getElementById('chatStatus').textContent = '';
+    setWaveformActive(false);
   };
 
   return rec;
 }
 
-function stopMic() {
-  clearTimeout(silenceTimer);
-  if (recognition) {
-    try { recognition.stop(); } catch(e){}
-  }
-  if (mediaRecorder && mediaRecorder.state === 'recording') {
-    try { mediaRecorder.stop(); } catch(e){}
-  }
-  isListening = false;
-  var btn = document.getElementById('micBtn');
-  var st = document.getElementById('chatStatus');
-  if (btn) btn.classList.remove('recording');
-  if (st && st.textContent.includes('Listening')) st.textContent = '';
-}
-
-async function toggleMic() {
-  stopAISpeech(); // Interrupt AI speech immediately
-  var btn = document.getElementById('micBtn');
-  var st = document.getElementById('chatStatus');
-
-  if (isListening) {
-    stopMic();
-    if (document.getElementById('chatInput').value.trim()) {
-      askAI();
+function toggleMic(){
+  if(isListening){
+    if(recognition) recognition.stop();
+    isListening = false;
+    setWaveformActive(false);
+    document.getElementById('micBtn').classList.remove('recording');
+  } else {
+    stopAISpeech();
+    if(!recognition) recognition = initSpeechRecognition();
+    if(recognition){
+      try { recognition.start(); } catch(e){}
+    } else {
+      alert('Speech Recognition is not supported on this browser. Try Google Chrome or Microsoft Edge.');
     }
-    return;
-  }
-
-  // Attempt 1: Web Speech Recognition (Real-Time Live Partial Transcription)
-  if (!recognition) {
-    recognition = initSpeechRecognition();
-  }
-
-  if (recognition) {
-    try {
-      recognition.start();
-      return;
-    } catch(e) {
-      console.warn('WebSpeech start failed, falling back to MediaRecorder:', e);
-    }
-  }
-
-  // Attempt 2: MediaRecorder + Groq Whisper Backup
-  try {
-    var stream = await navigator.mediaDevices.getUserMedia({audio:true});
-    mediaRecorder = new MediaRecorder(stream);
-    audioChunks = [];
-    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-    mediaRecorder.onstop = async () => {
-      st.textContent = '⚡ Transcribing with Groq Whisper…';
-      var blob = new Blob(audioChunks, {type: mediaRecorder.mimeType || 'audio/webm'});
-      var fd = new FormData(); fd.append('audio', blob, 'audio.webm');
-      fetch('/api/chat/transcribe', {method:'POST', body:fd}).then(r => r.json()).then(d => {
-        if (d.status === 'ok' && d.text) {
-          document.getElementById('chatInput').value = d.text;
-          st.textContent = '';
-          askAI();
-        } else {
-          st.textContent = '⚠ Voice not recognized. Try typing.';
-        }
-        stream.getTracks().forEach(t => t.stop());
-      }).catch(e => {
-        st.textContent = '⚠ Speech recognition error: ' + e;
-        stream.getTracks().forEach(t => t.stop());
-      });
-    };
-    mediaRecorder.start();
-    isListening = true;
-    btn.classList.add('recording');
-    st.textContent = '🎤 Listening (Whisper mode)... Tap 🎤 to send.';
-  } catch(e) {
-    st.textContent = '⚠ Microphone access denied.';
   }
 }
 
-/* ---- High-Quality Natural Voice Speech Synthesizer ---- */
-function playAudio(b64, textToSpeak) {
-  if (audioMuted) return;
-  stopAISpeech(); // Cancel any existing speech
+function playAudio(b64, textContent){
+  if(audioMuted) return;
+  stopAISpeech();
 
-  var text = (textToSpeak || '').replace(/[*#_`]/g, '').trim();
-
-  // Primary: Browser Natural Neural Speech Synthesis
-  if ('speechSynthesis' in window && text.length > 0) {
-    try {
-      window.speechSynthesis.cancel();
-      var utterance = new SpeechSynthesisUtterance(text);
+  if('speechSynthesis' in window && textContent){
+    var cleanText = textContent.replace(/[*#_`~\[\]\(\)\<\>]/g, ' ').trim();
+    if(cleanText.length > 0){
+      var utterance = new SpeechSynthesisUtterance(cleanText);
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
-
-      // Select best voice matching language
       var voices = window.speechSynthesis.getVoices();
-      if (voices.length > 0) {
-        var preferredVoice = voices.find(v => v.lang.startsWith('te') || v.lang.startsWith('hi') || v.name.includes('Natural') || v.name.includes('Google'));
-        if (preferredVoice) utterance.voice = preferredVoice;
-      }
+      var regionalVoice = voices.find(v => v.lang.startsWith('te') || v.lang.startsWith('hi') || v.lang.startsWith('en-IN'));
+      if(regionalVoice) utterance.voice = regionalVoice;
 
-      utterance.onstart = function() { isSpeakingAI = true; };
-      utterance.onend = function() { isSpeakingAI = false; };
-      utterance.onerror = function() { isSpeakingAI = false; };
+      utterance.onstart = function() { isSpeakingAI = true; setWaveformActive(true); };
+      utterance.onend = function() { isSpeakingAI = false; setWaveformActive(false); };
+      utterance.onerror = function() { isSpeakingAI = false; setWaveformActive(false); };
 
       window.speechSynthesis.speak(utterance);
       return;
-    } catch(e) {
-      console.warn('SpeechSynthesis failed, falling back to audio payload:', e);
     }
   }
 
-  // Fallback: MP3 Audio Payload Playback
-  if (b64) {
+  if(b64){
     try {
       currentAudioElement = new Audio('data:audio/mp3;base64,' + b64);
-      currentAudioElement.onplay = function() { isSpeakingAI = true; };
-      currentAudioElement.onended = function() { isSpeakingAI = false; currentAudioElement = null; };
+      currentAudioElement.onplay = function() { isSpeakingAI = true; setWaveformActive(true); };
+      currentAudioElement.onended = function() { isSpeakingAI = false; setWaveformActive(false); currentAudioElement = null; };
       currentAudioElement.play();
     } catch(e) {}
   }
 }
 
 function appendMsg(who, text){
-  var log=document.getElementById('chatLog');
-  var div=document.createElement('div');
-  div.className = 'msg-bubble ' + (who==='You' ? 'msg-user' : 'msg-ai');
+  var log = document.getElementById('chatLog');
+  var div = document.createElement('div');
+  div.className = 'msg-bubble ' + (who === 'You' ? 'msg-user' : 'msg-ai');
   
   var now = new Date();
   var timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-  
-  var formattedText = text.replace(/</g,'&lt;').replace(/\n/g, '<br>');
-  div.innerHTML = formattedText + '<div class="msg-meta">' + (who==='You'?'You':'AgriAI') + ' · ' + timeStr + '</div>';
+  var formattedText = text.replace(/</g,'&lt;').replace(/
+/g, '<br>');
+  div.innerHTML = formattedText + '<div class="msg-meta">' + (who === 'You' ? 'You' : 'AgriAI') + ' · ' + timeStr + '</div>';
   
   log.appendChild(div);
-  log.scrollTop=log.scrollHeight;
+  log.scrollTop = log.scrollHeight;
 }
 
 function getFarmContext(){
@@ -947,38 +2175,54 @@ function getFarmContext(){
   ctx.temperature = getVal('temperature');
   ctx.humidity = getVal('humidity');
   ctx.soil_ph = getVal('soil_ph');
+  ctx.weather_forecast = current3DayWeatherSummary || '';
   return ctx;
 }
 
 function askAI(){
-  var inp=document.getElementById('chatInput');
-  var q=inp.value.trim(); if(!q) return;
-  appendMsg('You', q); inp.value='';
-  var st=document.getElementById('chatStatus'); st.textContent='AgriAI is thinking…';
+  var inp = document.getElementById('chatInput');
+  var q = inp.value.trim();
+  if(!q) return;
+  appendMsg('You', q);
+  inp.value = '';
+  var st = document.getElementById('chatStatus');
+  st.textContent = 'AgriAI is thinking…';
   
-  fetch('/api/chat',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({message:q, farm_context: getFarmContext()})
-  }).then(r=>r.json()).then(d=>{
+  fetch('/api/chat', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({message: q, farm_context: getFarmContext()})
+  }).then(r => r.json()).then(d => {
     appendMsg('AI', d.reply || '(no response)');
-    if(d.status==='no_key'){ st.textContent='⚠ Add GROQ_API_KEY to .env to enable AI chat.'; }
-    else if(d.status==='error'){ st.textContent='⚠ '+d.reply; }
-    else { st.textContent=''; playAudio(d.audio, d.reply); }
-  }).catch(e=>{ appendMsg('AI','⚠ Network error: '+e); st.textContent=''; });
+    if(d.status === 'no_key'){
+      st.textContent = '⚠ Add GROQ_API_KEY to .env to unlock full Llama 3.3 70B AI.';
+    } else if(d.status === 'error'){
+      st.textContent = '⚠ ' + d.reply;
+    } else {
+      st.textContent = '';
+      playAudio(d.audio, d.reply);
+    }
+  }).catch(e => {
+    appendMsg('AI', '⚠ Network error: ' + e);
+    st.textContent = '';
+  });
 }
 
 function clearChat(){
-  fetch('/api/chat/clear',{method:'POST'});
+  fetch('/api/chat/clear', {method:'POST'});
   document.getElementById('chatLog').innerHTML = `
     <div class="chat-welcome">
       <div class="welcome-icon">🤖</div>
       <b>Chat cleared!</b>
-      <p>Ask AgriAI a new question or upload a leaf photo.</p>
+      <p>Ask AgriAI a new question, check 3-day weather, or upload a leaf photo.</p>
     </div>`;
-  document.getElementById('chatStatus').textContent='';
+  document.getElementById('chatStatus').textContent = '';
 }
+
+window.addEventListener('DOMContentLoaded', function(){
+  load3DayWeather();
+  updateFertilityMatrix();
+});
 </script>
 </body>
 </html>
-

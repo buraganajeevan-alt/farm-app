@@ -114,21 +114,93 @@ def district_mean_yield(state, district):
     return _DISTRICT_YIELD.get((state, district.strip()))
 
 # ---- Tier 2: online reverse geocode (no key) ----
-def reverse_geocode(lat, lon, timeout=4):
-    """Returns dict with district/locality + state if online, else None."""
-    url = (f"https://api.bigdatacloud.net/data/reverse-geocode-client"
-            f"?latitude={lat}&longitude={lon}&localityLanguage=en")
+def normalize_state(raw_name: str) -> str:
+    """Matches any raw state name against official 36 Indian States/UTs."""
+    if not raw_name:
+        return ""
+    clean = raw_name.lower().replace("state of", "").replace("state", "").replace("territory", "").strip()
+    
+    # Direct and partial matching
+    for official in STATE_WEATHER.keys():
+        off_clean = official.lower()
+        if clean == off_clean or clean in off_clean or off_clean in clean:
+            return official
+
+    aliases = {
+        "orissa": "Odisha",
+        "pondicherry": "Puducherry",
+        "uttaranchal": "Uttarakhand",
+        "nct": "Delhi",
+        "new delhi": "Delhi",
+        "jammu": "Jammu and Kashmir",
+        "kashmir": "Jammu and Kashmir",
+        "andaman": "Andaman and Nicobar Islands",
+        "daman": "Daman and Diu"
+    }
+    for k, v in aliases.items():
+        if k in clean:
+            return v
+    return raw_name.strip()
+
+
+def reverse_geocode(lat, lon, timeout=5):
+    """Returns dict with district/locality + state with dual provider fallback (BigDataCloud + OpenStreetMap)."""
+    lat, lon = float(lat), float(lon)
+    
+    # 1. Try BigDataCloud
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        raw = urllib.request.urlopen(req, timeout=timeout,
-                                    context=ssl.create_default_context()).read()
+        url = f"https://api.bigdatacloud.net/data/reverse-geocode-client?latitude={lat}&longitude={lon}&localityLanguage=en"
+        req = urllib.request.Request(url, headers={"User-Agent": "SmartFarmingApp/1.0"})
+        raw = urllib.request.urlopen(req, timeout=timeout, context=ssl.create_default_context()).read()
         d = json.loads(raw)
-        state = d.get("principalSubdivision") or ""
-        city = d.get("city") or d.get("locality") or d.get("principalSubdivision") or ""
-        return {"state": state.strip(), "district": city.strip(),
-                "country": d.get("countryName", "")}
+        st = normalize_state(d.get("principalSubdivision") or "")
+        city = d.get("city") or d.get("locality") or d.get("localityInfo", {}).get("administrative", [{}])[-1].get("name", "")
+        if st:
+            return {"state": st, "district": (city or st).strip(), "country": d.get("countryName", "")}
+    except Exception as e:
+        pass
+
+    # 2. Try OpenStreetMap Nominatim
+    try:
+        osm_url = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=json"
+        req = urllib.request.Request(osm_url, headers={"User-Agent": "SmartFarmingAssistant/1.0 (agri@smartfarm.local)"})
+        raw = urllib.request.urlopen(req, timeout=timeout, context=ssl.create_default_context()).read()
+        d = json.loads(raw)
+        addr = d.get("address", {})
+        raw_state = addr.get("state", "")
+        st = normalize_state(raw_state)
+        district = addr.get("county") or addr.get("state_district") or addr.get("district") or addr.get("city") or addr.get("town") or addr.get("village") or ""
+        if st:
+            return {"state": st, "district": district.strip(), "country": addr.get("country", "")}
+    except Exception as e:
+        pass
+
+    return None
+
+
+def search_location_places(query: str, limit=5):
+    """Forward geocode search for Indian cities, towns, and districts via Open-Meteo."""
+    clean_q = urllib.parse.quote(query.strip())
+    url = f"https://geocoding-api.open-meteo.com/v1/search?name={clean_q}&count={limit}&language=en&format=json"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "SmartFarmingApp/1.0"})
+        raw = urllib.request.urlopen(req, timeout=5, context=ssl.create_default_context()).read()
+        results = json.loads(raw).get("results", [])
+        places = []
+        for r in results:
+            st = normalize_state(r.get("admin1", ""))
+            places.append({
+                "name": r.get("name"),
+                "state": st or r.get("admin1", ""),
+                "country": r.get("country", ""),
+                "lat": r.get("latitude"),
+                "lon": r.get("longitude"),
+                "display": f"{r.get('name')}, {r.get('admin1', '')} ({r.get('country', '')})"
+            })
+        return places
     except Exception:
-        return None
+        return []
+
 
 def resolve_region(lat, lon):
     """Full resolver: Tier 2 (district, if online) else Tier 1 (state anchors)."""
@@ -136,10 +208,6 @@ def resolve_region(lat, lon):
     rg = reverse_geocode(lat, lon)
     if rg and rg.get("state"):
         st = rg["state"]
-        # normalise a few common spelling variants
-        norm = {"Maharashtra":"Maharashtra","Kerala":"Kerala","Tamil Nadu":"Tamil Nadu",
-                 "Uttar Pradesh":"Uttar Pradesh","West Bengal":"West Bengal"}
-        st = norm.get(st, st)
         rf = state_rainfall(st)
         dy = district_mean_yield(st, rg.get("district", "")) if rg.get("district") else None
         return {"tier": 2, "state": st, "district": rg.get("district"),
